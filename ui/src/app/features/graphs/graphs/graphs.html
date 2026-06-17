@@ -35,5 +35,13 @@
     >
       <app-price-per-meter [data]="pricePerMeter()" />
     </app-chart-card>
+
+    <app-chart-card
+      class="graphs__wide"
+      title="Eigen- vs. Fremdleistung über die Jahre"
+      description="Linien für Eigen- und Fremdleistungen je Geschäftsjahr; Balken (rechte Achse) zeigen die absolute Differenz, eingefärbt nach der höheren Seite."
+    >
+      <app-eigen-fremd-comparison [data]="eigenFremdByYear()" />
+    </app-chart-card>
   </div>
 </div>

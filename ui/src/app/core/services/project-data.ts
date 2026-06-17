@@ -26,6 +26,15 @@ export interface PaymentByYear {
   amount: number;
 }
 
+/** In-house vs. external service costs for a given year. */
+export interface EigenFremdByYear {
+  year: number;
+  /** Eigenleistungen — in-house service costs. */
+  eigenleistungen: number;
+  /** Fremdleistungen — external service costs. */
+  fremdleistungen: number;
+}
+
 /** Price per metre for a single project (for comparison charts). */
 export interface PricePerMeter {
   id: string;
@@ -93,6 +102,20 @@ export class ProjectData {
     }
     return [...totals.entries()]
       .map(([year, amount]) => ({ year, amount }))
+      .sort((a, b) => a.year - b.year);
+  });
+
+  /** In-house vs. external service costs summed per year (sorted ascending). */
+  readonly eigenFremdByYear = computed<EigenFremdByYear[]>(() => {
+    const totals = new Map<number, { eigen: number; fremd: number }>();
+    for (const p of this.projects()) {
+      const cur = totals.get(p.geschaeftsjahr) ?? { eigen: 0, fremd: 0 };
+      cur.eigen += p.kosten.eigenleistungen;
+      cur.fremd += p.kosten.fremdleistungen;
+      totals.set(p.geschaeftsjahr, cur);
+    }
+    return [...totals.entries()]
+      .map(([year, v]) => ({ year, eigenleistungen: v.eigen, fremdleistungen: v.fremd }))
       .sort((a, b) => a.year - b.year);
   });
 

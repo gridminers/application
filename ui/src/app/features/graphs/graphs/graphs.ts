@@ -4,6 +4,7 @@ import { ProjectData } from '../../../core/services/project-data';
 import { ChartCard } from '../../../shared/chart-card/chart-card';
 import { BudgetByDivision } from '../charts/budget-by-division/budget-by-division';
 import { CostComposition } from '../charts/cost-composition/cost-composition';
+import { EigenFremdComparison } from '../charts/eigen-fremd-comparison/eigen-fremd-comparison';
 import { PaymentPlan } from '../charts/payment-plan/payment-plan';
 import { PricePerMeter } from '../charts/price-per-meter/price-per-meter';
 
@@ -13,6 +14,7 @@ import { PricePerMeter } from '../charts/price-per-meter/price-per-meter';
     ChartCard,
     BudgetByDivision,
     CostComposition,
+    EigenFremdComparison,
     PaymentPlan,
     PricePerMeter,
   ],
@@ -26,4 +28,5 @@ export class Graphs {
   readonly costComposition = this.data.costComposition;
   readonly paymentsByYear = this.data.paymentsByYear;
   readonly pricePerMeter = this.data.pricePerMeter;
+  readonly eigenFremdByYear = this.data.eigenFremdByYear;
 }
