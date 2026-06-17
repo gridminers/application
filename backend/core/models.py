@@ -174,112 +174,110 @@ class Application(models.Model):
         verbose_name="Euro pro Meter Trassenlänge (€/m)",
     )
 
-    # -- Kostenpositionen (netto) --------------------------------------------
-    material_costs = models.DecimalField(
-        max_digits=14,
-        decimal_places=2,
-        validators=[MinValueValidator(Decimal("0"))],
-        verbose_name="Materialkosten netto (€)",
-    )
-    external_services = models.DecimalField(
-        max_digits=14,
-        decimal_places=2,
-        validators=[MinValueValidator(Decimal("0"))],
-        verbose_name="Fremdleistungen (€)",
-    )
-    internal_services = models.DecimalField(
-        max_digits=14,
-        decimal_places=2,
-        validators=[MinValueValidator(Decimal("0"))],
-        verbose_name="Eigenleistungen (€)",
-    )
-    engineering_services = models.DecimalField(
-        max_digits=14,
-        decimal_places=2,
-        validators=[MinValueValidator(Decimal("0"))],
-        verbose_name="Ingenieurleistungen Dritte (€)",
-    )
-
     # -- Konfigurierbare Zuschlagssätze -------------------------------------
     material_surcharge_rate = models.DecimalField(
         max_digits=5,
         decimal_places=4,
-        default=Decimal("0.17"),
-        validators=[MinValueValidator(Decimal("0"))],
         verbose_name="Zuschlagssatz Materialkosten",
-        help_text="Prozentualer Aufschlag auf die Materialkosten netto (Standard: 0,17 = 17 %).",
     )
     investment_surcharge_rate = models.DecimalField(
         max_digits=5,
         decimal_places=4,
-        default=Decimal("0.23"),
-        validators=[MinValueValidator(Decimal("0"))],
         verbose_name="Zuschlagssatz Investition",
-        help_text=(
-            "Prozentualer Aufschlag auf die Gesamtkosten ohne Zuschläge "
-            "(Standard: 0,23 = 23 %)."
-        ),
     )
 
-    # -- Abgeleitete Kostenfelder (automatisch befüllt) ---------------------
-    subtotal = models.DecimalField(
+    # -- Geplante Kosten (netto) --------------------------------------------
+    planned_material_costs = models.DecimalField(
         max_digits=14,
         decimal_places=2,
-        default=Decimal("0"),
-        editable=False,
-        verbose_name="Zwischenkosten (€)",
-        help_text=(
-            "Summe aus Materialkosten, Fremd-, Eigen- und Ingenieurleistungen. "
-            "Wird automatisch berechnet."
-        ),
+        verbose_name="Materialkosten netto (geplant)",
     )
-    material_surcharge = models.DecimalField(
+    planned_external_services = models.DecimalField(
         max_digits=14,
         decimal_places=2,
-        default=Decimal("0"),
-        editable=False,
-        verbose_name="Materialkostenzuschläge (€)",
-        help_text=(
-            "Zuschlagssatz Material × Materialkosten netto. "
-            "Wird automatisch berechnet."
-        ),
+        verbose_name="Fremdleistungen (geplant)",
     )
-    investment_surcharge = models.DecimalField(
+    planned_internal_services = models.DecimalField(
         max_digits=14,
         decimal_places=2,
-        default=Decimal("0"),
-        editable=False,
-        verbose_name="Investitionszuschläge (€)",
-        help_text=(
-            "Zuschlagssatz Investition × Gesamtkosten ohne Zuschläge. "
-            "Wird automatisch berechnet."
-        ),
+        verbose_name="Eigenleistungen (geplant)",
     )
-    total_surcharges = models.DecimalField(
+    planned_engineering_services = models.DecimalField(
         max_digits=14,
         decimal_places=2,
-        default=Decimal("0"),
-        editable=False,
-        verbose_name="Zwischensumme Zuschläge (€)",
-        help_text=(
-            "Summe aus Materialkostenzuschlägen und Investitionszuschlägen. "
-            "Wird automatisch berechnet."
-        ),
+        verbose_name="Ingenieurleistungen Dritte (geplant)",
     )
-    total_costs = models.DecimalField(
+    planned_subtotal = models.DecimalField(
         max_digits=14,
         decimal_places=2,
-        default=Decimal("0"),
-        editable=False,
-        verbose_name="Gesamtkosten (€)",
-        help_text=(
-            "Gesamtkosten ohne Zuschläge zuzüglich aller Zuschläge. "
-            "Wird automatisch berechnet."
-        ),
+        verbose_name="Zwischenkosten 1.-4. (geplant)",
+    )
+    planned_material_surcharge = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        verbose_name="Materialkostenzuschläge (geplant)",
+    )
+    planned_investment_surcharge = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        verbose_name="Investitionszuschläge (geplant)",
+    )
+    planned_total_surcharges = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        verbose_name="Zwischensumme Zuschläge 5.-8. (geplant)",
+    )
+    planned_total_costs = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        verbose_name="Gesamtkosten (geplant)",
+    )
+
+    # -- Reale Kosten (netto) --------------------------------------------
+    real_material_costs = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        verbose_name="Materialkosten netto (real)",
+        null=True,
+    )
+    real_external_services = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        verbose_name="Fremdleistungen (real)",
+        null=True,
+    )
+    real_internal_services = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        verbose_name="Eigenleistungen (real)",
+        null=True,
+    )
+    real_engineering_services = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        verbose_name="Ingenieurleistungen Dritte (real)",
+        null=True,
+    )
+    real_material_surcharge = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        verbose_name="Materialkostenzuschläge (real)",
+        null=True,
+    )
+    real_investment_surcharge = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        verbose_name="Investitionszuschläge (real)",
+        null=True,
+    )
+    real_total_costs = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        verbose_name="Gesamtkosten (real)",
+        null=True,
     )
 
     # -- Zahlungsplan --------------------------------------------------------
-
     payment_schedule = models.JSONField(
         default=list,
         verbose_name="Zahlungsplan",
@@ -289,7 +287,6 @@ class Application(models.Model):
     )
 
     # -- Metadaten -----------------------------------------------------------
-
     created_at = models.DateTimeField(
         auto_now_add=True,
         verbose_name="Erstellt am",
@@ -307,53 +304,52 @@ class Application(models.Model):
     def __str__(self) -> str:
         return f"{self.project_title} ({self.fiscal_year})"
 
-    # -- Berechnungsmethoden für abgeleitete Kostenfelder -------------------
-    def compute_subtotal(self) -> Decimal:
-        """
-        Berechnet die Gesamtkosten ohne Zuschläge.
-
-        Formel: Materialkosten + Fremdleistungen + Eigenleistungen
-                + Ingenieurleistungen Dritte
-        """
-        return (
-                self.material_costs
-                + self.external_services
-                + self.internal_services
-                + self.engineering_services
-        )
-
-    def compute_material_surcharge(self) -> Decimal:
-        """
-        Berechnet die Materialkostenzuschläge.
-
-        Formel: Materialkosten netto × Zuschlagssatz Material
-        """
-        return (self.material_costs * self.material_surcharge_rate).quantize(
-            Decimal("0.01")
-        )
-
-    def compute_investment_surcharge(self) -> Decimal:
-        """
-        Berechnet die Investitionszuschläge.
-
-        Formel: Gesamtkosten ohne Zuschläge × Zuschlagssatz Investition
-        """
-        return (self.compute_subtotal() * self.investment_surcharge_rate).quantize(
-            Decimal("0.01")
-        )
-
-    def compute_total_surcharges(self) -> Decimal:
-        """
-        Berechnet die Zwischensumme aller Zuschläge.
-
-        Formel: Materialkostenzuschläge + Investitionszuschläge
-        """
-        return self.compute_material_surcharge() + self.compute_investment_surcharge()
-
-    def compute_total_costs(self) -> Decimal:
-        """
-        Berechnet die Gesamtkosten.
-
-        Formel: Gesamtkosten ohne Zuschläge + Zwischensumme Zuschläge
-        """
-        return self.compute_subtotal() + self.compute_total_surcharges()
+    # def compute_subtotal(self) -> Decimal:
+    #     """
+    #     Berechnet die Gesamtkosten ohne Zuschläge.
+    #
+    #     Formel: Materialkosten + Fremdleistungen + Eigenleistungen
+    #             + Ingenieurleistungen Dritte
+    #     """
+    #     return (
+    #             self.material_costs
+    #             + self.external_services
+    #             + self.internal_services
+    #             + self.engineering_services
+    #     )
+    #
+    # def compute_material_surcharge(self) -> Decimal:
+    #     """
+    #     Berechnet die Materialkostenzuschläge.
+    #
+    #     Formel: Materialkosten netto × Zuschlagssatz Material
+    #     """
+    #     return (self.material_costs * self.material_surcharge_rate).quantize(
+    #         Decimal("0.01")
+    #     )
+    #
+    # def compute_investment_surcharge(self) -> Decimal:
+    #     """
+    #     Berechnet die Investitionszuschläge.
+    #
+    #     Formel: Gesamtkosten ohne Zuschläge × Zuschlagssatz Investition
+    #     """
+    #     return (self.compute_subtotal() * self.investment_surcharge_rate).quantize(
+    #         Decimal("0.01")
+    #     )
+    #
+    # def compute_total_surcharges(self) -> Decimal:
+    #     """
+    #     Berechnet die Zwischensumme aller Zuschläge.
+    #
+    #     Formel: Materialkostenzuschläge + Investitionszuschläge
+    #     """
+    #     return self.compute_material_surcharge() + self.compute_investment_surcharge()
+    #
+    # def compute_total_costs(self) -> Decimal:
+    #     """
+    #     Berechnet die Gesamtkosten.
+    #
+    #     Formel: Gesamtkosten ohne Zuschläge + Zwischensumme Zuschläge
+    #     """
+    #     return self.compute_subtotal() + self.compute_total_surcharges()

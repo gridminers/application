@@ -9,6 +9,7 @@ INSTALLED_APPS = [
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
+    'django.contrib.staticfiles',
     'django.contrib.messages',
     'rest_framework',
     'core',
@@ -87,3 +88,5 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 LOGIN_REDIRECT_URL = '/'
+
+STATIC_URL = "static/"
