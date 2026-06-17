@@ -29,6 +29,9 @@ export class GraphFilterBar {
   readonly showAsset = input(true);
   readonly showYear = input(true);
 
+  /** Legend text for the asset facet (e.g. "Gewerk" on the Gewerke page). */
+  readonly assetLabel = input('Assetklasse');
+
   /** Current selections (empty set = all). */
   readonly selectedSparten = input<ReadonlySet<Sparte>>(new Set<Sparte>());
   readonly selectedAssets = input<ReadonlySet<string>>(new Set<string>());

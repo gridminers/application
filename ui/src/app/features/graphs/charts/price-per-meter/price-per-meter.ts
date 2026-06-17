@@ -1,11 +1,18 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import type { EChartsCoreOption } from 'echarts/core';
 
-import { PricePerMeter as PricePerMeterData } from '../../../../core/services/project-data';
+import { PricePerMeterByYear } from '../../../../core/services/project-data';
 import { Echart } from '../../../../shared/echart/echart';
-import { sparteLabel, SPARTE_COLORS, chartTextStyle, darkAxis, darkTooltip } from '../../../../shared/chart-theme';
+import {
+  sparteLabel,
+  SPARTE_COLORS,
+  chartTextStyle,
+  darkAxis,
+  darkTooltip,
+  CHART_TEXT,
+} from '../../../../shared/chart-theme';
 
-/** Horizontal bar chart: price per metre (Preis pro Meter) per project. */
+/** Line chart: average price per metre (€/m) per division over the years. */
 @Component({
   selector: 'app-price-per-meter',
   imports: [Echart],
@@ -14,50 +21,56 @@ import { sparteLabel, SPARTE_COLORS, chartTextStyle, darkAxis, darkTooltip } fro
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PricePerMeter {
-  readonly data = input.required<PricePerMeterData[]>();
+  readonly data = input.required<PricePerMeterByYear>();
 
-  readonly ariaLabel = computed(() =>
-    'Balkendiagramm: Preis pro Meter je Projekt. ' +
-    this.data()
-      .map((d) => `${d.projekttitel} ${d.preisProMeter} Euro pro Meter`)
-      .join(', '),
-  );
+  readonly ariaLabel = computed(() => {
+    const d = this.data();
+    if (!d.years.length) {
+      return 'Liniendiagramm: keine Preis-pro-Meter-Daten für die aktuelle Auswahl.';
+    }
+    const lines = d.bySparte.map((s) => {
+      const points = s.values
+        .map((v, i) => (v === null ? null : `${d.years[i]}: ${v} €/m`))
+        .filter((p): p is string => p !== null)
+        .join(', ');
+      return `${sparteLabel(s.sparte)} — ${points}`;
+    });
+    return `Liniendiagramm: durchschnittlicher Preis pro Meter je Sparte über die Jahre. ${lines.join('. ')}.`;
+  });
 
   readonly options = computed<EChartsCoreOption>(() => {
-    // Ascending so the largest bar sits at the top of a horizontal axis.
-    const rows = [...this.data()].sort((a, b) => a.preisProMeter - b.preisProMeter);
+    const d = this.data();
     return {
       textStyle: chartTextStyle,
-      grid: { left: 8, right: 32, top: 8, bottom: 8, containLabel: true },
+      grid: { left: 8, right: 24, top: 48, bottom: 8, containLabel: true },
+      legend: { top: 8, textStyle: { color: CHART_TEXT } },
       tooltip: {
         trigger: 'axis',
-        axisPointer: { type: 'shadow' },
-        valueFormatter: (v: unknown) => `${v} €/m`,
+        valueFormatter: (v: unknown) =>
+          v === null || v === undefined ? '—' : `${v} €/m`,
         ...darkTooltip(),
       },
       xAxis: {
+        type: 'category',
+        data: d.years.map(String),
+        ...darkAxis(),
+        splitLine: { show: false },
+      },
+      yAxis: {
         type: 'value',
         ...darkAxis(),
         axisLabel: { formatter: '{value} €/m', color: '#b8b8b8' },
       },
-      yAxis: {
-        type: 'category',
-        data: rows.map((r) => sparteLabel(r.sparte)),
-        ...darkAxis(),
-        splitLine: { show: false },
-      },
-      series: [
-        {
-          type: 'bar',
-          data: rows.map((r) => ({
-            value: r.preisProMeter,
-            name: r.projekttitel,
-            itemStyle: { color: SPARTE_COLORS[r.sparte] },
-          })),
-          barMaxWidth: 28,
-          itemStyle: { borderRadius: [0, 6, 6, 0] },
-        },
-      ],
+      series: d.bySparte.map((s) => ({
+        name: sparteLabel(s.sparte),
+        type: 'line',
+        smooth: true,
+        connectNulls: true,
+        symbolSize: 8,
+        data: s.values,
+        lineStyle: { width: 3, color: SPARTE_COLORS[s.sparte] },
+        itemStyle: { color: SPARTE_COLORS[s.sparte] },
+      })),
     };
   });
 }

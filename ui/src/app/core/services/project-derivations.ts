@@ -47,29 +47,21 @@ export function projectStreet(p: Project): string {
  * Gewerk (trade)
  * ------------------------------------------------------------------ */
 
-/** Maps a network asset to the trade (Gewerk) that primarily executes it. */
-const ASSET_TO_GEWERK: Record<string, string> = {
-  '20 kV-Netz': 'Kabelbau Strom',
-  '0,4 kV-Netz': 'Kabelbau Strom',
-  'LWL-Netz': 'Kabelbau Daten',
-  GDR: 'Anlagenbau',
-  'Beschaffung/Aufbereitung': 'Anlagenbau',
-  Wassernetz: 'Rohrleitungsbau',
-  Leitungsnetz: 'Rohrleitungsbau',
-};
+/**
+ * Whether an asset class counts as a Gewerk (trade). Gewerke are the network
+ * assets — everything whose name ends in "-netz" (e.g. "20 kV-Netz",
+ * "Wassernetz"). Stations and procurement assets (GDR, Beschaffung) are not.
+ */
+export function isGewerk(asset: string): boolean {
+  return asset.trim().toLowerCase().endsWith('netz');
+}
 
-/** Fallback trade per division when the asset is unknown. */
-const SPARTE_TO_GEWERK: Record<Sparte, string> = {
-  Strom: 'Kabelbau Strom',
-  Gas: 'Rohrleitungsbau',
-  Wasser: 'Rohrleitungsbau',
-  Infotechnik: 'Kabelbau Daten',
-  Fernwaerme: 'Rohrleitungsbau',
-};
-
-/** Derive the trade (Gewerk) a project belongs to, from its asset / division. */
-export function projectGewerk(p: Project): string {
-  return ASSET_TO_GEWERK[p.asset] ?? SPARTE_TO_GEWERK[p.sparte] ?? 'Sonstiges';
+/**
+ * Derive the trade (Gewerk) a project belongs to: its asset class when that is
+ * a network asset, otherwise `null` (the project has no Gewerk).
+ */
+export function projectGewerk(p: Project): string | null {
+  return isGewerk(p.asset) ? p.asset : null;
 }
 
 /* ------------------------------------------------------------------ *

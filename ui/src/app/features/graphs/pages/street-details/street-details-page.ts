@@ -1,9 +1,10 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 
 import { SPARTEN } from '../../../../core/models/sparte';
-import { aggregateStreets, ProjectData } from '../../../../core/services/project-data';
+import { ProjectData } from '../../../../core/services/project-data';
 import { projectStreet } from '../../../../core/services/project-derivations';
 import { ChartCard } from '../../../../shared/chart-card/chart-card';
+import { sparteLabel } from '../../../../shared/chart-theme';
 import {
   StreetProjects,
   StreetProjectsData,
@@ -11,7 +12,7 @@ import {
 import { GraphFilterBar } from '../../filter-bar/graph-filter-bar';
 import { createGraphFilterModel } from '../../filter-bar/graph-filter-model';
 
-/** Straßendetails: number of projects per street, filterable and drill-down. */
+/** Straßendetails: number of projects for a single selected street. */
 @Component({
   selector: 'app-street-details-page',
   imports: [GraphFilterBar, ChartCard, StreetProjects],
@@ -23,57 +24,31 @@ export class StreetDetailsPage {
   private readonly data = inject(ProjectData);
   protected readonly filter = createGraphFilterModel(this.data.projects);
 
-  /** Currently focused street; empty string means "all streets". */
+  /** All streets to choose from. Empty string means none selected yet. */
+  protected readonly streets = this.data.streets;
   protected readonly selectedStreet = signal<string>('');
 
-  /** Streets available given the active facet filters. */
-  protected readonly availableStreets = computed(() =>
-    aggregateStreets(this.filter.filtered()),
-  );
-
-  /** The street to actually chart (ignored if filtered out of scope). */
-  private readonly effectiveStreet = computed(() => {
-    const street = this.selectedStreet();
-    return street && this.availableStreets().includes(street) ? street : '';
-  });
-
   protected readonly chartData = computed<StreetProjectsData>(() => {
-    const projects = this.filter.filtered();
-    const street = this.effectiveStreet();
+    const street = this.selectedStreet();
+    const inStreet = this.filter
+      .filtered()
+      .filter((p) => projectStreet(p) === street);
 
-    if (street) {
-      const inStreet = projects.filter((p) => projectStreet(p) === street);
-      const years = [...new Set(inStreet.map((p) => p.geschaeftsjahr))].sort(
-        (a, b) => a - b,
-      );
-      const sparten = SPARTEN.filter((s) => inStreet.some((p) => p.sparte === s));
-      return {
-        categories: years.map(String),
-        bySparte: sparten.map((sparte) => ({
-          sparte,
-          counts: years.map(
-            (y) =>
-              inStreet.filter((p) => p.geschaeftsjahr === y && p.sparte === sparte)
-                .length,
-          ),
-        })),
-        categoryKind: 'Jahr',
-      };
-    }
+    const sparten = SPARTEN.filter((s) => inStreet.some((p) => p.sparte === s));
+    const years = [...new Set(inStreet.map((p) => p.geschaeftsjahr))].sort(
+      (a, b) => a - b,
+    );
 
-    const streets = this.availableStreets();
-    const sparten = SPARTEN.filter((s) => projects.some((p) => p.sparte === s));
     return {
-      categories: streets,
-      bySparte: sparten.map((sparte) => ({
-        sparte,
-        counts: streets.map(
-          (st) =>
-            projects.filter((p) => projectStreet(p) === st && p.sparte === sparte)
+      categories: sparten.map((s) => sparteLabel(s)),
+      series: years.map((year) => ({
+        name: String(year),
+        data: sparten.map(
+          (sparte) =>
+            inStreet.filter((p) => p.sparte === sparte && p.geschaeftsjahr === year)
               .length,
         ),
       })),
-      categoryKind: 'Straße',
     };
   });
 

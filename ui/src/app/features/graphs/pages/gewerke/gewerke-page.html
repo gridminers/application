@@ -2,22 +2,19 @@
   <header class="graph-page__head">
     <h1 class="graph-page__title">Gewerke</h1>
     <p class="graph-page__lead">
-      Kosten nach ausführendem Gewerk — eine vertiefende Sicht auf Sparten und
-      Assets. Das Gewerk wird aus Sparte und Asset abgeleitet.
+      Kosten nach Gewerk — den Netz-Assets („-netz"). Eine vertiefende Sicht auf
+      die Sparte / Assets, gefiltert über die einzelnen Gewerke.
     </p>
   </header>
 
   <app-graph-filter-bar
     class="graph-page__filters"
-    [sparten]="filter.availableSparten()"
+    [showSparte]="false"
+    [showYear]="false"
+    assetLabel="Gewerk"
     [assets]="filter.availableAssets()"
-    [years]="filter.availableYears()"
-    [selectedSparten]="filter.selectedSparten()"
     [selectedAssets]="filter.selectedAssets()"
-    [selectedYears]="filter.selectedYears()"
-    (selectedSpartenChange)="filter.selectedSparten.set($event)"
     (selectedAssetsChange)="filter.selectedAssets.set($event)"
-    (selectedYearsChange)="filter.selectedYears.set($event)"
   />
 
   <div class="graph-page__body">

@@ -10,12 +10,17 @@ import {
   darkTooltip,
   CHART_ACCENT,
   CHART_TEXT,
+  CHART_TEXT_MUTED,
 } from '../../../../shared/chart-theme';
 
-/** Colour for planned amounts (Geplant). */
+/** Line colour for planned amounts (Geplant). */
 const PLAN_COLOR = CHART_ACCENT;
-/** Colour for actual amounts (Ist). */
+/** Line colour for actual amounts (Ist). */
 const IST_COLOR = '#e8a700';
+/** Diff-bar fill when the plan was higher (under-run). */
+const PLAN_BAR = 'rgba(0, 230, 57, 0.4)';
+/** Diff-bar fill when the actuals were higher (over-run). */
+const IST_BAR = 'rgba(232, 167, 0, 0.4)';
 
 /** Format euros as thousands ("123 Tsd.") for axis labels. */
 function thousands(v: number): string {
@@ -23,9 +28,10 @@ function thousands(v: number): string {
 }
 
 /**
- * Grouped bar chart comparing the planned payment schedule (Zahlungsplan) with
- * the realised costs (Ist) per year. Years that have not closed yet carry no
- * Ist bar.
+ * Combined chart: lines for planned (Zahlungsplan) vs. actual (Ist) costs per
+ * year, plus a bar (secondary right-hand axis) showing the absolute difference.
+ * The bar is tinted to match whichever side is higher. Years without actuals
+ * carry no Ist point and no diff bar.
  */
 @Component({
   selector: 'app-plan-ist-comparison',
@@ -39,13 +45,19 @@ export class PlanIstComparison {
 
   readonly ariaLabel = computed(
     () =>
-      'Balkendiagramm: geplante gegenüber tatsächlichen Kosten je Jahr. ' +
+      'Liniendiagramm mit Differenz-Balken: geplante gegenüber tatsächlichen Kosten je Jahr. ' +
       this.data()
-        .map(
-          (d) =>
-            `${d.year}: Geplant ${formatEuro(d.geplant)}` +
-            (d.ist === null ? ', Ist noch offen' : `, Ist ${formatEuro(d.ist)}`),
-        )
+        .map((d) => {
+          if (d.ist === null) {
+            return `${d.year}: Geplant ${formatEuro(d.geplant)}, Ist noch offen`;
+          }
+          const diff = Math.abs(d.geplant - d.ist);
+          const higher = d.ist > d.geplant ? 'Ist höher' : 'Plan höher';
+          return (
+            `${d.year}: Geplant ${formatEuro(d.geplant)}, ` +
+            `Ist ${formatEuro(d.ist)}, Differenz ${formatEuro(diff)} (${higher})`
+          );
+        })
         .join('. '),
   );
 
@@ -53,15 +65,15 @@ export class PlanIstComparison {
     const rows = this.data();
     return {
       textStyle: chartTextStyle,
-      grid: { left: 8, right: 16, top: 48, bottom: 8, containLabel: true },
+      grid: { left: 8, right: 8, top: 48, bottom: 8, containLabel: true },
       legend: {
         top: 8,
         textStyle: { color: CHART_TEXT },
-        data: ['Geplant', 'Ist'],
+        data: ['Geplant', 'Ist', 'Differenz'],
       },
       tooltip: {
         trigger: 'axis',
-        axisPointer: { type: 'shadow' },
+        axisPointer: { type: 'cross' },
         valueFormatter: (v: unknown) =>
           v === null || v === undefined ? '—' : formatEuro(Number(v)),
         ...darkTooltip(),
@@ -72,25 +84,63 @@ export class PlanIstComparison {
         ...darkAxis(),
         splitLine: { show: false },
       },
-      yAxis: {
-        type: 'value',
-        ...darkAxis(),
-        axisLabel: { formatter: thousands, color: '#b8b8b8' },
-      },
+      yAxis: [
+        {
+          type: 'value',
+          name: 'Kosten',
+          nameTextStyle: { color: CHART_TEXT_MUTED },
+          ...darkAxis(),
+          axisLabel: { formatter: thousands, color: CHART_TEXT_MUTED },
+        },
+        {
+          type: 'value',
+          name: 'Differenz',
+          position: 'right',
+          nameTextStyle: { color: CHART_TEXT_MUTED },
+          ...darkAxis(),
+          splitLine: { show: false },
+          axisLabel: { formatter: thousands, color: CHART_TEXT_MUTED },
+        },
+      ],
       series: [
         {
-          name: 'Geplant',
+          name: 'Differenz',
           type: 'bar',
+          yAxisIndex: 1,
+          z: 1,
+          barMaxWidth: 48,
+          itemStyle: { borderRadius: [4, 4, 0, 0] },
+          data: rows.map((r) => {
+            if (r.ist === null) {
+              return { value: null };
+            }
+            const istHigher = r.ist > r.geplant;
+            return {
+              value: Math.abs(r.geplant - r.ist),
+              itemStyle: { color: istHigher ? IST_BAR : PLAN_BAR },
+            };
+          }),
+        },
+        {
+          name: 'Geplant',
+          type: 'line',
+          yAxisIndex: 0,
+          z: 3,
+          symbolSize: 8,
           data: rows.map((r) => r.geplant),
-          barMaxWidth: 36,
-          itemStyle: { color: PLAN_COLOR, borderRadius: [4, 4, 0, 0] },
+          lineStyle: { width: 3, color: PLAN_COLOR },
+          itemStyle: { color: PLAN_COLOR },
         },
         {
           name: 'Ist',
-          type: 'bar',
+          type: 'line',
+          yAxisIndex: 0,
+          z: 3,
+          symbolSize: 8,
+          connectNulls: false,
           data: rows.map((r) => r.ist),
-          barMaxWidth: 36,
-          itemStyle: { color: IST_COLOR, borderRadius: [4, 4, 0, 0] },
+          lineStyle: { width: 3, color: IST_COLOR, type: 'dashed' },
+          itemStyle: { color: IST_COLOR },
         },
       ],
     };

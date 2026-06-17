@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import {
   aggregateBudgetBySparte,
   aggregateCostComposition,
-  aggregatePricePerMeter,
+  aggregatePricePerMeterByYear,
   ProjectData,
 } from '../../../../core/services/project-data';
 import { ChartCard } from '../../../../shared/chart-card/chart-card';
@@ -38,7 +38,7 @@ export class SparteAssetsPage {
     aggregateCostComposition(this.filter.filtered()),
   );
   protected readonly pricePerMeter = computed(() =>
-    aggregatePricePerMeter(this.filter.filtered()),
+    aggregatePricePerMeterByYear(this.filter.filtered()),
   );
 
   protected readonly scope = computed(() => {

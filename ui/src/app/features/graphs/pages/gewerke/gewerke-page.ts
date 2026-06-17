@@ -5,6 +5,7 @@ import {
   aggregateGewerke,
   ProjectData,
 } from '../../../../core/services/project-data';
+import { isGewerk } from '../../../../core/services/project-derivations';
 import { ChartCard } from '../../../../shared/chart-card/chart-card';
 import { EigenFremdComparison } from '../../charts/eigen-fremd-comparison/eigen-fremd-comparison';
 import { GewerkeBreakdown } from '../../charts/gewerke-breakdown/gewerke-breakdown';
@@ -20,7 +21,13 @@ import { createGraphFilterModel } from '../../filter-bar/graph-filter-model';
 })
 export class GewerkePage {
   private readonly data = inject(ProjectData);
-  protected readonly filter = createGraphFilterModel(this.data.projects);
+
+  /** Only projects whose asset is a network "-netz" count as a Gewerk. */
+  private readonly gewerkProjects = computed(() =>
+    this.data.projects().filter((p) => isGewerk(p.asset)),
+  );
+
+  protected readonly filter = createGraphFilterModel(this.gewerkProjects);
 
   protected readonly gewerke = computed(() =>
     aggregateGewerke(this.filter.filtered()),

@@ -22,9 +22,17 @@
     <app-chart-card
       class="graph-page__wide"
       title="Zahlungsplan vs. Ist über die Jahre"
-      description="Geplante Zahlungen je Kalenderjahr gegenübergestellt mit den realisierten Ist-Kosten."
+      description="Linien für geplante und tatsächliche Kosten je Jahr; Balken (rechte Achse) zeigen die absolute Differenz, eingefärbt nach der höheren Seite."
     >
       <app-plan-ist-comparison [data]="planIst()" />
+    </app-chart-card>
+
+    <app-chart-card
+      class="graph-page__wide"
+      title="Gesamtkosten Plan vs. Ist"
+      description="Summe der geplanten und tatsächlichen Kosten über alle abgeschlossenen Jahre."
+    >
+      <app-plan-ist-totals [data]="totals()" />
     </app-chart-card>
   </div>
 </div>

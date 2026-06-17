@@ -1,37 +1,26 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import type { EChartsCoreOption } from 'echarts/core';
 
-import { Sparte } from '../../../../core/models/sparte';
 import { Echart } from '../../../../shared/echart/echart';
 import {
-  sparteLabel,
-  SPARTE_COLORS,
   chartTextStyle,
   darkAxis,
   darkTooltip,
+  CATEGORY_PALETTE,
   CHART_TEXT,
 } from '../../../../shared/chart-theme';
 
-/** One division's project counts, aligned to the chart categories. */
-export interface StreetSeries {
-  sparte: Sparte;
-  counts: number[];
-}
-
-/** Data for the street-projects chart. */
+/** Data for the street-projects chart: counts per division, stacked by year. */
 export interface StreetProjectsData {
-  /** Category labels along the x-axis (streets or years). */
+  /** Division labels along the x-axis. */
   categories: string[];
-  /** Project counts per division, stacked. */
-  bySparte: StreetSeries[];
-  /** What a category represents, used in the accessible label. */
-  categoryKind: string;
+  /** One stacked series per fiscal year. */
+  series: { name: string; data: number[] }[];
 }
 
 /**
- * Stacked bar chart showing the number of projects per category (street or, for
- * a focused street, year), broken down by division. Driven entirely by the page
- * filter bar and street selector.
+ * Stacked bar chart showing the number of projects of a single street, broken
+ * down by division class (x-axis) and fiscal year (stack).
  */
 @Component({
   selector: 'app-street-projects',
@@ -49,18 +38,19 @@ export class StreetProjects {
       return 'Balkendiagramm: keine Projekte für die aktuelle Auswahl.';
     }
     const totals = d.categories.map((cat, i) => {
-      const sum = d.bySparte.reduce((s, series) => s + series.counts[i], 0);
+      const sum = d.series.reduce((s, series) => s + series.data[i], 0);
       return `${cat}: ${sum} ${sum === 1 ? 'Projekt' : 'Projekte'}`;
     });
     return (
-      `Gestapeltes Balkendiagramm: Anzahl Projekte je ${d.categoryKind}, ` +
-      `aufgeschlüsselt nach Sparte. ${totals.join(', ')}.`
+      'Gestapeltes Balkendiagramm: Anzahl Projekte je Sparte, ' +
+      `aufgeschlüsselt nach Jahr. ${totals.join(', ')}.`
     );
   });
 
   readonly options = computed<EChartsCoreOption>(() => {
     const d = this.data();
     return {
+      color: [...CATEGORY_PALETTE],
       textStyle: chartTextStyle,
       grid: { left: 8, right: 16, top: 48, bottom: 8, containLabel: true },
       legend: { top: 8, textStyle: { color: CHART_TEXT } },
@@ -82,14 +72,13 @@ export class StreetProjects {
         ...darkAxis(),
         axisLabel: { color: '#b8b8b8' },
       },
-      series: d.bySparte.map((s) => ({
-        name: sparteLabel(s.sparte),
+      series: d.series.map((s) => ({
+        name: s.name,
         type: 'bar',
         stack: 'projekte',
         emphasis: { focus: 'series' },
-        itemStyle: { color: SPARTE_COLORS[s.sparte] },
-        data: s.counts,
-        barMaxWidth: 56,
+        data: s.data,
+        barMaxWidth: 64,
       })),
     };
   });

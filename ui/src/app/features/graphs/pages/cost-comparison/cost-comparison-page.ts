@@ -3,13 +3,17 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { aggregatePlanIstByYear, ProjectData } from '../../../../core/services/project-data';
 import { ChartCard } from '../../../../shared/chart-card/chart-card';
 import { PlanIstComparison } from '../../charts/plan-ist-comparison/plan-ist-comparison';
+import {
+  PlanIstTotals,
+  PlanIstTotalsData,
+} from '../../charts/plan-ist-totals/plan-ist-totals';
 import { GraphFilterBar } from '../../filter-bar/graph-filter-bar';
 import { createGraphFilterModel } from '../../filter-bar/graph-filter-model';
 
 /** Plan vs. actual cost comparison over the years. */
 @Component({
   selector: 'app-cost-comparison-page',
-  imports: [GraphFilterBar, ChartCard, PlanIstComparison],
+  imports: [GraphFilterBar, ChartCard, PlanIstComparison, PlanIstTotals],
   templateUrl: './cost-comparison-page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -19,5 +23,16 @@ export class CostComparisonPage {
 
   protected readonly planIst = computed(() =>
     aggregatePlanIstByYear(this.filter.filtered()),
+  );
+
+  /** Totals over the closed years only, so plan and Ist are comparable. */
+  protected readonly totals = computed<PlanIstTotalsData>(() =>
+    this.planIst().reduce<PlanIstTotalsData>(
+      (acc, row) =>
+        row.ist === null
+          ? acc
+          : { geplant: acc.geplant + row.geplant, ist: acc.ist + row.ist },
+      { geplant: 0, ist: 0 },
+    ),
   );
 }

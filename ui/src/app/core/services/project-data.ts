@@ -110,6 +110,14 @@ export interface PricePerMeter {
   preisProMeter: number;
 }
 
+/** Average price per metre per division across the fiscal years. */
+export interface PricePerMeterByYear {
+  /** Fiscal years in ascending order. */
+  years: number[];
+  /** One series per division; `null` where the division has no project that year. */
+  bySparte: { sparte: Sparte; values: (number | null)[] }[];
+}
+
 /* ------------------------------------------------------------------ *
  * Pure aggregate functions. Each takes a project list so the graph
  * pages can filter first and then aggregate the subset.
@@ -210,11 +218,15 @@ export function aggregatePlanIstByYear(
     .sort((a, b) => a.year - b.year);
 }
 
-/** Cost aggregates grouped by trade (Gewerk), largest first. */
+/** Cost aggregates grouped by trade (Gewerk), largest first. Non-Gewerk
+ * projects (assets that are not a network "-netz") are excluded. */
 export function aggregateGewerke(projects: readonly Project[]): GewerkeAggregate[] {
   const groups = new Map<string, Project[]>();
   for (const p of projects) {
     const gewerk = projectGewerk(p);
+    if (gewerk === null) {
+      continue;
+    }
     const list = groups.get(gewerk) ?? [];
     list.push(p);
     groups.set(gewerk, list);
@@ -258,6 +270,30 @@ export function aggregatePricePerMeter(
       preisProMeter: p.preisProMeter,
     }))
     .sort((a, b) => b.preisProMeter - a.preisProMeter);
+}
+
+/** Average price per metre per division and fiscal year (for the trend line). */
+export function aggregatePricePerMeterByYear(
+  projects: readonly Project[],
+): PricePerMeterByYear {
+  const withPrice = projects.filter((p) => p.preisProMeter > 0);
+  const years = [...new Set(withPrice.map((p) => p.geschaeftsjahr))].sort(
+    (a, b) => a - b,
+  );
+  const sparten = SPARTEN.filter((s) => withPrice.some((p) => p.sparte === s));
+  const bySparte = sparten.map((sparte) => ({
+    sparte,
+    values: years.map((year) => {
+      const ps = withPrice.filter(
+        (p) => p.sparte === sparte && p.geschaeftsjahr === year,
+      );
+      if (!ps.length) {
+        return null;
+      }
+      return Math.round(ps.reduce((s, p) => s + p.preisProMeter, 0) / ps.length);
+    }),
+  }));
+  return { years, bySparte };
 }
 
 /** Distinct streets / locations present in the data, in display order. */
