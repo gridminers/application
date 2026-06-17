@@ -23,6 +23,14 @@
   <div class="graph-page__scroll">
     <div #body class="graph-page__body" (scroll)="onScroll()">
       <app-chart-card
+        class="graph-page__wide"
+        title="Gesamtausgaben je Jahr"
+        description="Summe der Gesamtkosten aller Projekte je Geschäftsjahr; respektiert die aktiven Filter."
+      >
+        <app-expenditures-by-year [data]="expendituresByYear()" />
+      </app-chart-card>
+
+      <app-chart-card
         title="Gesamtkosten je Sparte"
         description="Summe der Gesamtkosten aller Projekte, gruppiert nach Sparte."
       >

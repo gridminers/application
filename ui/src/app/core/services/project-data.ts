@@ -100,6 +100,13 @@ export interface GewerkeAggregate {
   composition: CostComposition;
 }
 
+/** Total expenditure (Gesamtkosten) summed for a given fiscal year. */
+export interface ExpenditureByYear {
+  year: number;
+  /** Summed Gesamtkosten of all projects in that fiscal year. */
+  gesamtkosten: number;
+}
+
 /** In-house vs. external service costs for a given year. */
 export interface EigenFremdByYear {
   year: number;
@@ -268,6 +275,22 @@ export function aggregateGewerke(projects: readonly Project[]): GewerkeAggregate
       composition: sumCostCompositions(ps.map(projectComposition)),
     }))
     .sort((a, b) => b.gesamtkosten - a.gesamtkosten);
+}
+
+/** Total expenditure (Gesamtkosten) summed per fiscal year (sorted ascending). */
+export function aggregateExpendituresByYear(
+  projects: readonly Project[],
+): ExpenditureByYear[] {
+  const totals = new Map<number, number>();
+  for (const p of projects) {
+    totals.set(
+      p.geschaeftsjahr,
+      (totals.get(p.geschaeftsjahr) ?? 0) + p.kosten.gesamtkosten,
+    );
+  }
+  return [...totals.entries()]
+    .map(([year, gesamtkosten]) => ({ year, gesamtkosten }))
+    .sort((a, b) => a.year - b.year);
 }
 
 /** In-house vs. external service costs summed per year (sorted ascending). */

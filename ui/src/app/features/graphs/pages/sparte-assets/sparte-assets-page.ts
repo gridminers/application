@@ -14,6 +14,7 @@ import {
   aggregateBudgetBySparte,
   aggregateCostComposition,
   aggregateEigenFremdByYear,
+  aggregateExpendituresByYear,
   aggregatePricePerMeterByYear,
   ProjectData,
 } from '../../../../core/services/project-data';
@@ -23,6 +24,7 @@ import { BudgetByAsset } from '../../charts/budget-by-asset/budget-by-asset';
 import { BudgetByDivision } from '../../charts/budget-by-division/budget-by-division';
 import { CostComposition } from '../../charts/cost-composition/cost-composition';
 import { EigenFremdComparison } from '../../charts/eigen-fremd-comparison/eigen-fremd-comparison';
+import { ExpendituresByYear } from '../../charts/expenditures-by-year/expenditures-by-year';
 import { PricePerMeter } from '../../charts/price-per-meter/price-per-meter';
 import { GraphFilterBar } from '../../filter-bar/graph-filter-bar';
 import { createGraphFilterModel } from '../../filter-bar/graph-filter-model';
@@ -33,6 +35,7 @@ import { createGraphFilterModel } from '../../filter-bar/graph-filter-model';
   imports: [
     GraphFilterBar,
     ChartCard,
+    ExpendituresByYear,
     BudgetByDivision,
     BudgetByAsset,
     CostComposition,
@@ -80,6 +83,9 @@ export class SparteAssetsPage {
     this.canScrollDown.set(remaining > 8);
   }
 
+  protected readonly expendituresByYear = computed(() =>
+    aggregateExpendituresByYear(this.filter.filtered()),
+  );
   protected readonly budgetBySparte = computed(() =>
     aggregateBudgetBySparte(this.filter.filtered()),
   );
