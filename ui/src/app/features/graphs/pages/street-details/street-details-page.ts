@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 
 import { SPARTEN } from '../../../../core/models/sparte';
 import { ProjectData } from '../../../../core/services/project-data';
@@ -27,7 +28,10 @@ export class StreetDetailsPage {
 
   /** All streets to choose from. Empty string means none selected yet. */
   protected readonly streets = this.data.streets;
-  protected readonly selectedStreet = signal<string>('');
+  /** Initialised from the `strasse` query param (e.g. when opened from the map). */
+  protected readonly selectedStreet = signal<string>(
+    inject(ActivatedRoute).snapshot.queryParamMap.get('strasse') ?? '',
+  );
 
   protected readonly chartData = computed<StreetProjectsData>(() => {
     const street = this.selectedStreet();

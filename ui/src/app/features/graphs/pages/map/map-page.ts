@@ -8,10 +8,12 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
+import { Router } from '@angular/router';
 import * as L from 'leaflet';
 
 import { Sparte, SPARTE_LABELS, SPARTEN } from '../../../../core/models/sparte';
 import { aggregateStreetSparten, ProjectData } from '../../../../core/services/project-data';
+import { projectStreet } from '../../../../core/services/project-derivations';
 import { StreetGeocoder } from '../../../../core/services/street-geocoder';
 
 /** Geographic center of Braunschweig. */
@@ -52,6 +54,8 @@ interface LocatedStreet {
   name: string;
   lines: L.LatLng[][];
   sparten: Sparte[];
+  /** Number of projects (items) per division on this street. */
+  counts: Map<Sparte, number>;
 }
 
 /** OpenStreetMap view of Braunschweig, themed to match the app. */
@@ -65,6 +69,7 @@ interface LocatedStreet {
 export class MapPage implements AfterViewInit, OnDestroy {
   private readonly data = inject(ProjectData);
   private readonly geocoder = inject(StreetGeocoder);
+  private readonly router = inject(Router);
 
   private readonly mapContainer =
     viewChild.required<ElementRef<HTMLElement>>('mapContainer');
@@ -169,13 +174,30 @@ export class MapPage implements AfterViewInit, OnDestroy {
         ? this.data.projects()
         : this.data.projects().filter((p) => p.geschaeftsjahr === year);
 
+    // Count projects (items) per division for every street in one pass.
+    const countsByStreet = new Map<string, Map<Sparte, number>>();
+    for (const p of projects) {
+      const street = projectStreet(p);
+      let counts = countsByStreet.get(street);
+      if (!counts) {
+        counts = new Map<Sparte, number>();
+        countsByStreet.set(street, counts);
+      }
+      counts.set(p.sparte, (counts.get(p.sparte) ?? 0) + 1);
+    }
+
     this.streets.length = 0;
     for (const { name, sparten } of aggregateStreetSparten(projects)) {
       const lines = this.geometryByStreet.get(name);
       if (!lines) {
         continue;
       }
-      this.streets.push({ name, lines, sparten });
+      this.streets.push({
+        name,
+        lines,
+        sparten,
+        counts: countsByStreet.get(name) ?? new Map<Sparte, number>(),
+      });
     }
     this.render();
   }
@@ -199,21 +221,24 @@ export class MapPage implements AfterViewInit, OnDestroy {
     this.streetLayer.clearLayers();
     const sideBySide = this.map.getZoom() >= PARALLEL_ZOOM_THRESHOLD;
     for (const street of this.streets) {
+      // One shared popup element per street, reused across its lines (only one
+      // popup is ever open at a time).
+      const popup = this.buildStreetPopup(street);
       if (sideBySide && street.sparten.length > 1) {
-        this.drawParallel(street);
+        this.drawParallel(street, popup);
       } else {
-        this.drawStacked(street);
+        this.drawStacked(street, popup);
       }
     }
   }
 
   /** Lay the divisions out as parallel lines centred on the real street. */
-  private drawParallel(street: LocatedStreet): void {
+  private drawParallel(street: LocatedStreet, popup: HTMLElement): void {
     const n = street.sparten.length;
     street.sparten.forEach((sparte, i) => {
       const offset = (i - (n - 1) / 2) * LINE_SPACING;
       for (const line of street.lines) {
-        this.addLine(this.offsetLine(line, offset), street, {
+        this.addLine(this.offsetLine(line, offset), street, popup, {
           color: STREET_COLORS[sparte],
         });
       }
@@ -225,7 +250,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
    * solid line; several are interleaved as a multi-colour dashed line so every
    * colour stays visible even when the street is only a few pixels wide.
    */
-  private drawStacked(street: LocatedStreet): void {
+  private drawStacked(street: LocatedStreet, popup: HTMLElement): void {
     const n = street.sparten.length;
     street.sparten.forEach((sparte, i) => {
       const style: L.PolylineOptions = { color: STREET_COLORS[sparte] };
@@ -234,7 +259,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
         style.dashOffset = `${STRIPE_DASH * i}`;
       }
       for (const line of street.lines) {
-        this.addLine(line, street, style);
+        this.addLine(line, street, popup, style);
       }
     });
   }
@@ -243,6 +268,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
   private addLine(
     latlngs: L.LatLng[],
     street: LocatedStreet,
+    popup: HTMLElement,
     style: L.PolylineOptions,
   ): void {
     if (!this.streetLayer) {
@@ -256,6 +282,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
       ...style,
     })
       .bindTooltip(this.tooltip(street), { sticky: true })
+      .bindPopup(popup, { className: 'street-popup-wrapper', minWidth: 200 })
       .addTo(this.streetLayer);
   }
 
@@ -263,6 +290,53 @@ export class MapPage implements AfterViewInit, OnDestroy {
   private tooltip(street: LocatedStreet): string {
     const labels = street.sparten.map((s) => SPARTE_LABELS[s]).join(', ');
     return `${street.name} — ${labels}`;
+  }
+
+  /**
+   * Build the click popup for a street: the per-division item counts and a
+   * button that opens the full Straßendetails view for the street. Rendered as
+   * a native Leaflet popup (no separate Angular overlay).
+   */
+  private buildStreetPopup(street: LocatedStreet): HTMLElement {
+    const root = L.DomUtil.create('div', 'street-popup');
+
+    const title = L.DomUtil.create('h3', 'street-popup__title', root);
+    title.textContent = street.name;
+
+    const list = L.DomUtil.create('ul', 'street-popup__list', root);
+    list.setAttribute('role', 'list');
+    for (const sparte of street.sparten) {
+      const item = L.DomUtil.create('li', 'street-popup__item', list);
+
+      const swatch = L.DomUtil.create('span', 'street-popup__swatch', item);
+      swatch.style.background = STREET_COLORS[sparte];
+      swatch.setAttribute('aria-hidden', 'true');
+
+      const label = L.DomUtil.create('span', 'street-popup__label', item);
+      label.textContent = SPARTE_LABELS[sparte];
+
+      const count = L.DomUtil.create('span', 'street-popup__count', item);
+      const n = street.counts.get(sparte) ?? 0;
+      count.textContent = String(n);
+      count.setAttribute(
+        'aria-label',
+        `${n} ${n === 1 ? 'Projekt' : 'Projekte'} ${SPARTE_LABELS[sparte]}`,
+      );
+    }
+
+    const button = L.DomUtil.create('button', 'street-popup__button', root);
+    button.type = 'button';
+    button.textContent = 'Straßendetails öffnen';
+    // Keep the click from reaching the map (pan/zoom) and navigate to the
+    // street-details page with the street pre-selected.
+    L.DomEvent.on(button, 'click', (event) => {
+      L.DomEvent.stop(event);
+      void this.router.navigate(['/strassen'], {
+        queryParams: { strasse: street.name },
+      });
+    });
+
+    return root;
   }
 
   /**
