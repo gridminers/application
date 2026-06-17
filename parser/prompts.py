@@ -33,7 +33,7 @@ _BASE = (
     "You are extracting data from the first page of a German infrastructure "
     "planning approval PDF. Read the page image (and the provided text layer, "
     "if any) and return JSON only. Use null for any value you cannot find. Do "
-    "not calculate or invent values."
+    "not calculate or invent values. Some fields may be striked through by hand, maybe there is even a handwritten follow up: Prefer the follow up handwritten one in such cases."
 )
 
 _TARGET = (
@@ -43,7 +43,7 @@ _TARGET = (
     "Use the canonical label exactly as written above, even if the document "
     "uses a synonym or abbreviation. For Geschäftsjahr, also treat it as the "
     "value for Jahresauswertung. For Ausführungszeit, capture both von and bis "
-    "in one value. For cost fields, preserve net/gross wording and currency "
+    "in one value. BE CAREFULE WITH HANDWRITTEN ADJUSTMENTS IN THIS FIELD. WATCH OUT FOR STRIKED THROUGH TEXT AND EXCLUDE IT. For cost fields, preserve net/gross wording and currency "
     "exactly as shown. For Zahlungsplan, extract the visible three-year payment "
     "plan; if only partial yearly payments are visible, return the visible "
     "years and amounts. Do not calculate or invent missing values. Add a "

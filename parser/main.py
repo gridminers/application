@@ -1,12 +1,17 @@
-"""One-shot parser: render the first page of each PDF in ./dump, send it to the
-Azure Responses (vision) endpoint, and write a clean JSON of the 19 target
-fields + warnings to ./processed_files.
+"""Parser: render the first page of each PDF in ./dump, send it to the Azure
+Responses (vision) endpoint, and write a clean JSON of the 19 target fields +
+warnings to ./processed_files.
 
-Run:  python main.py
+Run once:    python main.py
+Watch mode:  python main.py --watch [--interval SECONDS]
+
+In watch mode the script keeps running, polling ./dump for new or changed PDFs
+and processing them as they appear (Ctrl+C to stop).
 """
 
 from __future__ import annotations
 
+import argparse
 import base64
 import hashlib
 import json
@@ -34,6 +39,11 @@ TEXT_LAYER_MIN_CHARS = 20   # ignore near-empty text layers
 REQUEST_TIMEOUT = 180       # seconds
 MAX_RETRIES = 4             # attempts on 429 / 5xx
 BACKOFF_BASE = 2.0          # seconds, exponential
+
+# --- Watch mode tuning ------------------------------------------------------
+WATCH_INTERVAL = 5.0        # seconds between dump-dir polls
+STABILITY_CHECKS = 2        # consecutive identical (size, mtime) reads
+STABILITY_DELAY = 0.5       # seconds between stability checks
 
 
 def load_manifest() -> dict[str, str]:
@@ -160,64 +170,147 @@ def load_config() -> dict:
     }
 
 
-def main() -> None:
-    cfg = load_config()
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    DUMP_DIR.mkdir(parents=True, exist_ok=True)
+def is_stable(path: Path) -> bool:
+    """Return True once the file's size and mtime stop changing.
 
+    Guards against picking up a PDF that is still being written/copied into the
+    dump directory.
+    """
+    try:
+        prev = path.stat()
+    except OSError:
+        return False
+    for _ in range(STABILITY_CHECKS):
+        time.sleep(STABILITY_DELAY)
+        try:
+            cur = path.stat()
+        except OSError:
+            return False
+        if (cur.st_size, cur.st_mtime) != (prev.st_size, prev.st_mtime):
+            return False
+        prev = cur
+    return True
+
+
+def process_pdf(path: Path, manifest: dict[str, str], cfg: dict) -> str:
+    """Process a single PDF. Returns one of: 'ok', 'skip', 'fail'.
+
+    Updates and persists the manifest on success.
+    """
+    name = path.name
+    try:
+        digest = sha256_of(path)
+    except OSError as exc:
+        print(f"[fail] {name}: cannot read file ({exc})")
+        return "fail"
+
+    if digest in manifest:
+        print(f"[skip] {name} (already processed -> {manifest[digest]})")
+        return "skip"
+
+    print(f"[proc] {name}")
+    try:
+        png_bytes, text_layer = render_first_page(path)
+        result = call_llm(png_bytes, text_layer, cfg)
+    except Exception as exc:  # noqa: BLE001 - report and keep going
+        print(f"[fail] {name}: {exc}")
+        return "fail"
+
+    out = {
+        "source_file": name,
+        "targets": result.get("targets", {}),
+        "warnings": result.get("warnings", []),
+    }
+    out_name = path.with_suffix(".json").name
+    (OUTPUT_DIR / out_name).write_text(
+        json.dumps(out, indent=2, ensure_ascii=False), encoding="utf-8"
+    )
+    manifest[digest] = out_name
+    save_manifest(manifest)
+    print(f"[ok]   {name} -> {out_name}")
+    return "ok"
+
+
+def scan_once(
+    manifest: dict[str, str],
+    cfg: dict,
+    *,
+    require_stable: bool = False,
+) -> tuple[int, int, int]:
+    """Process every pending PDF in the dump directory once.
+
+    Returns a (succeeded, skipped, failed) count tuple.
+    """
+    succeeded = skipped = failed = 0
+    for path in sorted(DUMP_DIR.glob("*.pdf")):
+        if require_stable and not is_stable(path):
+            print(f"[wait] {path.name} (still being written)")
+            continue
+        status = process_pdf(path, manifest, cfg)
+        if status == "ok":
+            succeeded += 1
+        elif status == "skip":
+            skipped += 1
+        else:
+            failed += 1
+    return succeeded, skipped, failed
+
+
+def run_once(cfg: dict) -> None:
     manifest = load_manifest()
     pdfs = sorted(DUMP_DIR.glob("*.pdf"))
     if not pdfs:
         print(f"no PDFs found in {DUMP_DIR}")
         return
 
-    succeeded: list[str] = []
-    skipped: list[str] = []
-    failed: list[tuple[str, str]] = []
-
-    for path in pdfs:
-        name = path.name
-        try:
-            digest = sha256_of(path)
-        except OSError as exc:
-            print(f"[fail] {name}: cannot read file ({exc})")
-            failed.append((name, f"read error: {exc}"))
-            continue
-
-        if digest in manifest:
-            print(f"[skip] {name} (already processed -> {manifest[digest]})")
-            skipped.append(name)
-            continue
-
-        print(f"[proc] {name}")
-        try:
-            png_bytes, text_layer = render_first_page(path)
-            result = call_llm(png_bytes, text_layer, cfg)
-        except Exception as exc:  # noqa: BLE001 - report and keep going
-            print(f"[fail] {name}: {exc}")
-            failed.append((name, str(exc)))
-            continue
-
-        out = {
-            "source_file": name,
-            "targets": result.get("targets", {}),
-            "warnings": result.get("warnings", []),
-        }
-        out_name = path.with_suffix(".json").name
-        (OUTPUT_DIR / out_name).write_text(
-            json.dumps(out, indent=2, ensure_ascii=False), encoding="utf-8"
-        )
-        manifest[digest] = out_name
-        save_manifest(manifest)
-        print(f"[ok]   {name} -> {out_name}")
-        succeeded.append(name)
+    succeeded, skipped, failed = scan_once(manifest, cfg)
 
     print("\n=== run summary ===")
-    print(f"succeeded: {len(succeeded)}")
-    print(f"skipped:   {len(skipped)}")
-    print(f"failed:    {len(failed)}")
-    for n, reason in failed:
-        print(f"  - {n}: {reason}")
+    print(f"succeeded: {succeeded}")
+    print(f"skipped:   {skipped}")
+    print(f"failed:    {failed}")
+
+
+def run_watch(cfg: dict, interval: float) -> None:
+    manifest = load_manifest()
+    print(f"watching {DUMP_DIR} every {interval:g}s (Ctrl+C to stop)")
+    try:
+        while True:
+            succeeded, _, failed = scan_once(manifest, cfg, require_stable=True)
+            if succeeded or failed:
+                print(f"[scan] processed {succeeded}, failed {failed}")
+            time.sleep(interval)
+    except KeyboardInterrupt:
+        print("\nstopped watching")
+
+
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--watch",
+        action="store_true",
+        help="keep running and process new/changed PDFs as they appear",
+    )
+    parser.add_argument(
+        "--interval",
+        type=float,
+        default=WATCH_INTERVAL,
+        metavar="SECONDS",
+        help=f"polling interval in watch mode (default: {WATCH_INTERVAL:g})",
+    )
+    return parser.parse_args(argv)
+
+
+def main(argv: list[str] | None = None) -> None:
+    args = parse_args(argv)
+    cfg = load_config()
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    DUMP_DIR.mkdir(parents=True, exist_ok=True)
+
+    if args.watch:
+        run_watch(cfg, args.interval)
+    else:
+        run_once(cfg)
 
 
 if __name__ == "__main__":
