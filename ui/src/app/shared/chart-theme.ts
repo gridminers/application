@@ -10,6 +10,19 @@ export const SPARTE_COLORS: Record<Sparte, string> = {
 };
 
 /**
+ * Colour per division (Sparte) used to mark streets on the map. Distinct,
+ * saturated hues chosen to stay legible on the dark basemap. Shared so charts
+ * (e.g. the street-details bars) can match the map's line colours.
+ */
+export const STREET_COLORS: Record<Sparte, string> = {
+  Strom: '#ffd400', // yellow
+  Gas: '#00e639', // green
+  Fernwaerme: '#ff3b30', // red
+  Wasser: '#2b9bff', // blue
+  Infotechnik: '#ff3bd4', // magenta
+};
+
+/**
  * Qualitative palette for non-division categories (e.g. cost types).
  * On-brand monochrome: led by the accent green and stepped through the
  * neutral grayscale, matching the "Neutral Monochrome Technical System".

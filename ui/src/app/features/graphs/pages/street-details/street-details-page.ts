@@ -5,7 +5,7 @@ import { SPARTEN } from '../../../../core/models/sparte';
 import { ProjectData } from '../../../../core/services/project-data';
 import { projectStreet } from '../../../../core/services/project-derivations';
 import { ChartCard } from '../../../../shared/chart-card/chart-card';
-import { sparteLabel } from '../../../../shared/chart-theme';
+import { sparteLabel, STREET_COLORS } from '../../../../shared/chart-theme';
 import { GraphScroll } from '../../../../shared/graph-scroll/graph-scroll';
 import {
   StreetProjects,
@@ -46,6 +46,7 @@ export class StreetDetailsPage {
 
     return {
       categories: sparten.map((s) => sparteLabel(s)),
+      categoryColors: sparten.map((s) => STREET_COLORS[s]),
       series: years.map((year) => ({
         name: String(year),
         data: sparten.map(

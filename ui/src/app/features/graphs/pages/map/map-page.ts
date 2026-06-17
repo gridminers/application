@@ -15,22 +15,11 @@ import { Sparte, SPARTE_LABELS, SPARTEN } from '../../../../core/models/sparte';
 import { aggregateStreetSparten, ProjectData } from '../../../../core/services/project-data';
 import { projectStreet } from '../../../../core/services/project-derivations';
 import { StreetGeometryStore } from '../../../../core/services/street-geometry-store';
+import { STREET_COLORS } from '../../../../shared/chart-theme';
 
 /** Geographic center of Braunschweig. */
 const BRAUNSCHWEIG_CENTER: L.LatLngTuple = [52.2689, 10.5268];
 const DEFAULT_ZOOM = 13;
-
-/**
- * Colour per division (Sparte) used to mark the work done on a street.
- * Distinct, saturated hues chosen to stay legible on the dark basemap.
- */
-const STREET_COLORS: Record<Sparte, string> = {
-  Strom: '#ffd400', // yellow
-  Gas: '#00e639', // green
-  Fernwaerme: '#ff3b30', // red
-  Wasser: '#2b9bff', // blue
-  Infotechnik: '#ff3bd4', // magenta
-};
 
 /** Stroke width of a single street marking, in pixels. */
 const LINE_WEIGHT = 3;

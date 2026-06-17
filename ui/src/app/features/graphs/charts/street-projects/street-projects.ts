@@ -6,14 +6,15 @@ import {
   chartTextStyle,
   darkAxis,
   darkTooltip,
-  CATEGORY_PALETTE,
-  CHART_TEXT,
+  CHART_SURFACE,
 } from '../../../../shared/chart-theme';
 
 /** Data for the street-projects chart: counts per division, stacked by year. */
 export interface StreetProjectsData {
   /** Division labels along the x-axis. */
   categories: string[];
+  /** Colour per division (matches the map's street lines), aligned to `categories`. */
+  categoryColors: string[];
   /** One stacked series per fiscal year. */
   series: { name: string; data: number[] }[];
 }
@@ -49,11 +50,10 @@ export class StreetProjects {
 
   readonly options = computed<EChartsCoreOption>(() => {
     const d = this.data();
+    const colors = d.categoryColors;
     return {
-      color: [...CATEGORY_PALETTE],
       textStyle: chartTextStyle,
-      grid: { left: 8, right: 16, top: 48, bottom: 8, containLabel: true },
-      legend: { top: 8, textStyle: { color: CHART_TEXT } },
+      grid: { left: 8, right: 16, top: 16, bottom: 8, containLabel: true },
       tooltip: {
         trigger: 'axis',
         axisPointer: { type: 'shadow' },
@@ -79,6 +79,13 @@ export class StreetProjects {
         emphasis: { focus: 'series' },
         data: s.data,
         barMaxWidth: 64,
+        itemStyle: {
+          // Colour each bar by its division (Sparte) to match the map's lines;
+          // a thin surface-coloured border keeps the stacked year segments legible.
+          color: (params: { dataIndex: number }) => colors[params.dataIndex],
+          borderColor: CHART_SURFACE,
+          borderWidth: 1,
+        },
       })),
     };
   });
