@@ -1,29 +1,57 @@
 <div class="cost-composition">
   <fieldset class="cost-composition__filter">
-    <legend class="cost-composition__legend">Assetklassen</legend>
+    <legend class="cost-composition__legend">Sparte</legend>
     <div class="cost-composition__chips">
       <button
         type="button"
         class="cost-composition__chip"
-        [class.is-active]="!hasSelection()"
-        [attr.aria-pressed]="!hasSelection()"
-        (click)="reset()"
+        [class.is-active]="!hasSparte()"
+        [attr.aria-pressed]="!hasSparte()"
+        (click)="selectSparte(null)"
       >
         Alle
       </button>
-      @for (asset of assets(); track asset) {
-        <label class="cost-composition__chip" [class.is-active]="isSelected(asset)">
-          <input
-            type="checkbox"
-            class="visually-hidden"
-            [checked]="isSelected(asset)"
-            (change)="toggle(asset)"
-          />
-          <span>{{ asset }}</span>
-        </label>
+      @for (sparte of sparten(); track sparte) {
+        <button
+          type="button"
+          class="cost-composition__chip"
+          [class.is-active]="isSparteSelected(sparte)"
+          [attr.aria-pressed]="isSparteSelected(sparte)"
+          (click)="selectSparte(sparte)"
+        >
+          {{ label(sparte) }}
+        </button>
       }
     </div>
   </fieldset>
+
+  @if (hasSparte()) {
+    <fieldset class="cost-composition__filter">
+      <legend class="cost-composition__legend">Assetklassen</legend>
+      <div class="cost-composition__chips">
+        <button
+          type="button"
+          class="cost-composition__chip"
+          [class.is-active]="!hasAssets()"
+          [attr.aria-pressed]="!hasAssets()"
+          (click)="resetAssets()"
+        >
+          Alle
+        </button>
+        @for (asset of assets(); track asset) {
+          <label class="cost-composition__chip" [class.is-active]="isAssetSelected(asset)">
+            <input
+              type="checkbox"
+              class="visually-hidden"
+              [checked]="isAssetSelected(asset)"
+              (change)="toggleAsset(asset)"
+            />
+            <span>{{ asset }}</span>
+          </label>
+        }
+      </div>
+    </fieldset>
+  }
 
   <app-echart
     class="cost-composition__chart"

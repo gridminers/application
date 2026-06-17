@@ -27,6 +27,15 @@ export interface CostCompositionByAsset {
   composition: CostComposition;
 }
 
+/** Cost composition aggregated for a single division, with its asset classes. */
+export interface CostCompositionBySparte {
+  sparte: Sparte;
+  /** Total composition across all assets of this division. */
+  composition: CostComposition;
+  /** Per-asset breakdown within this division (ordered by asset name). */
+  assets: CostCompositionByAsset[];
+}
+
 /** Cost composition of a single project (maps the breakdown to chart slices). */
 function projectComposition(p: Project): CostComposition {
   return {
@@ -135,6 +144,37 @@ export class ProjectData {
       asset,
       composition: sumCostCompositions(groups.get(asset) ?? []),
     }));
+  });
+
+  /**
+   * Cost composition grouped by division (Sparte) and, within each, by asset
+   * class. Only divisions that actually occur in the data are included, in
+   * canonical {@link SPARTEN} order.
+   */
+  readonly costCompositionBySparte = computed<CostCompositionBySparte[]>(() => {
+    const projects = this.projects();
+    return SPARTEN.filter((sparte) => projects.some((p) => p.sparte === sparte)).map(
+      (sparte) => {
+        const inSparte = projects.filter((p) => p.sparte === sparte);
+        const assetGroups = new Map<string, CostComposition[]>();
+        for (const p of inSparte) {
+          const list = assetGroups.get(p.asset) ?? [];
+          list.push(projectComposition(p));
+          assetGroups.set(p.asset, list);
+        }
+        const assets = [...assetGroups.keys()]
+          .sort((a, b) => a.localeCompare(b, 'de'))
+          .map((asset) => ({
+            asset,
+            composition: sumCostCompositions(assetGroups.get(asset) ?? []),
+          }));
+        return {
+          sparte,
+          composition: sumCostCompositions(inSparte.map(projectComposition)),
+          assets,
+        };
+      },
+    );
   });
 
   /** Scheduled payments summed per year (sorted ascending). */
