@@ -1,0 +1,7 @@
+.env
+__pycache__/
+*.pyc
+.venv/
+dump/*.pdf
+processed_files/*.json
+processed_files/.manifest.json
