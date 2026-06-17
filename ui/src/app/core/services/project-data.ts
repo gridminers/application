@@ -16,6 +16,7 @@ export interface CostComposition {
   fremdleistungen: number;
   eigenleistungen: number;
   ingenieurleistungDritte: number;
+  /** Sum of all surcharges (Zwischensumme Zuschläge) across projects. */
   zuschlaege: number;
 }
 
@@ -70,7 +71,7 @@ export class ProjectData {
         eigenleistungen: acc.eigenleistungen + p.kosten.eigenleistungen,
         ingenieurleistungDritte:
           acc.ingenieurleistungDritte + p.kosten.ingenieurleistungDritte,
-        zuschlaege: acc.zuschlaege + p.kosten.zuschlaege,
+        zuschlaege: acc.zuschlaege + p.kosten.zwischensummeZuschlaege,
       }),
       {
         materialkosten: 0,
