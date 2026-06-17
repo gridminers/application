@@ -316,6 +316,32 @@ Chore: Wartungsaufgaben (Dependencies, etc.)
 - [ ] Logging funktioniert
 - [ ] Monitoring eingerichtet
 
+## Docker-Betrieb
+
+### Settings für Docker
+
+Die Datei `backend/settings/docker.py` erbt von `dev.py` und setzt `ALLOWED_HOSTS = ["*"]`, damit der Container von außen erreichbar ist. Sie wird über die Umgebungsvariable `DJANGO_SETTINGS_MODULE=backend.settings.docker` aktiviert (im `Dockerfile` gesetzt).
+
+**Neue Settings-Dateien** für andere Umgebungen (z. B. `staging.py`) genauso anlegen: von `common.py` oder `dev.py` erben und nur die Delta-Werte überschreiben.
+
+### Container starten
+
+```bash
+# Vom Repository-Root aus
+docker compose up --build
+```
+
+Backend läuft auf Port **8000**, Migrationen werden automatisch beim Start ausgeführt.
+
+### Wichtige Unterschiede Dev vs. Docker
+
+| Aspekt           | Dev (lokal)                  | Docker                         |
+|------------------|------------------------------|--------------------------------|
+| Settings         | `backend.settings.dev`       | `backend.settings.docker`      |
+| ALLOWED_HOSTS    | `[]`                         | `["*"]`                        |
+| Datenbank        | SQLite in `backend/db.sqlite3` | SQLite (Volume-gemountet)    |
+| Server           | `manage.py runserver`        | `manage.py runserver 0.0.0.0:8000` |
+
 ---
 
-*Stand: Letzte Aktualisierung durch AI-Assistent – Projekt-Initialanalyse*
+*Stand: Letzte Aktualisierung durch AI-Assistent – Docker-Setup hinzugefügt*
