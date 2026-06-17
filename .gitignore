@@ -5,3 +5,5 @@ db.sqlite3
 
 **/__pycache__/
 **/.env
+challenge_data/
+challenge_data_test/
