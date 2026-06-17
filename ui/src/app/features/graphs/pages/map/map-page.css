@@ -54,3 +54,32 @@
 .map ::ng-deep .map-labels {
   filter: brightness(1.7);
 }
+
+/* Colour-to-division legend for the street markings. */
+.map ::ng-deep .map-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 10px;
+  background: color-mix(in srgb, var(--surface-base) 88%, transparent);
+  color: var(--on-surface);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  font-size: 0.75rem;
+  line-height: 1.2;
+}
+
+.map ::ng-deep .map-legend__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.map ::ng-deep .map-legend__swatch {
+  width: 14px;
+  height: 4px;
+  border-radius: 2px;
+  flex: 0 0 auto;
+}

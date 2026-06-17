@@ -355,6 +355,35 @@ export function aggregateStreets(projects: readonly Project[]): string[] {
   );
 }
 
+/** A street together with every division (Sparte) that has work on it. */
+export interface StreetSparten {
+  name: string;
+  sparten: Sparte[];
+}
+
+/**
+ * Distinct streets with the set of divisions (Sparten) that have projects on
+ * each, in display order. `sparten` follows the canonical {@link SPARTEN}
+ * order so colour assignment on the map stays stable.
+ */
+export function aggregateStreetSparten(
+  projects: readonly Project[],
+): StreetSparten[] {
+  const bySparte = new Map<string, Set<Sparte>>();
+  for (const p of projects) {
+    const street = projectStreet(p);
+    let set = bySparte.get(street);
+    if (!set) {
+      set = new Set<Sparte>();
+      bySparte.set(street, set);
+    }
+    set.add(p.sparte);
+  }
+  return [...bySparte.entries()]
+    .map(([name, set]) => ({ name, sparten: SPARTEN.filter((s) => set.has(s)) }))
+    .sort((a, b) => a.name.localeCompare(b.name, 'de'));
+}
+
 /**
  * Provides project data and the aggregates the graph views need.
  *
@@ -388,6 +417,9 @@ export class ProjectData {
 
   /** Distinct streets / locations present in the data. */
   readonly streets = computed(() => aggregateStreets(this.projects()));
+
+  /** Streets paired with the divisions (Sparten) that have work on them. */
+  readonly streetSparten = computed(() => aggregateStreetSparten(this.projects()));
 
   /** Cost composition grouped by division and asset class. */
   readonly costCompositionBySparte = computed(() =>
