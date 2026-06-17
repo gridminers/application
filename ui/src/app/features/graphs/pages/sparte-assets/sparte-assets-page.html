@@ -20,34 +20,63 @@
     (selectedYearsChange)="filter.selectedYears.set($event)"
   />
 
-  <div class="graph-page__body">
-    <app-chart-card
-      title="Gesamtkosten je Sparte"
-      description="Summe der Gesamtkosten aller Projekte, gruppiert nach Sparte."
-    >
-      <app-budget-by-division [data]="budgetBySparte()" />
-    </app-chart-card>
+  <div class="graph-page__scroll">
+    <div #body class="graph-page__body" (scroll)="onScroll()">
+      <app-chart-card
+        title="Gesamtkosten je Sparte"
+        description="Summe der Gesamtkosten aller Projekte, gruppiert nach Sparte."
+      >
+        <app-budget-by-division [data]="budgetBySparte()" />
+      </app-chart-card>
 
-    <app-chart-card
-      title="Gesamtkosten je Asset"
-      description="Summe der Gesamtkosten aller Projekte, gruppiert nach Assetklasse."
-    >
-      <app-budget-by-asset [data]="budgetByAsset()" />
-    </app-chart-card>
+      <app-chart-card
+        title="Gesamtkosten je Asset"
+        description="Summe der Gesamtkosten aller Projekte, gruppiert nach Assetklasse."
+      >
+        <app-budget-by-asset [data]="budgetByAsset()" />
+      </app-chart-card>
 
-    <app-chart-card
-      title="Kostenarten gesamt"
-      description="Aufteilung in Material-, Fremd-, Eigenleistungen, Ingenieurleistung Dritter und Zuschläge."
-    >
-      <app-cost-composition [data]="composition()" [scope]="scope()" />
-    </app-chart-card>
+      <app-chart-card
+        class="graph-page__wide"
+        title="Preis pro Meter"
+        description="Durchschnittlicher Preis je Meter Leitungslänge je Sparte im Verlauf der Jahre."
+      >
+        <app-price-per-meter [data]="pricePerMeter()" />
+      </app-chart-card>
 
-    <app-chart-card
-      class="graph-page__wide"
-      title="Preis pro Meter"
-      description="Durchschnittlicher Preis je Meter Leitungslänge je Sparte im Verlauf der Jahre."
-    >
-      <app-price-per-meter [data]="pricePerMeter()" />
-    </app-chart-card>
+      <app-chart-card
+        title="Kostenarten gesamt"
+        description="Aufteilung in Material-, Fremd-, Eigenleistungen, Ingenieurleistung Dritter und Zuschläge."
+      >
+        <app-cost-composition [data]="composition()" [scope]="scope()" />
+      </app-chart-card>
+    </div>
+
+    @if (canScrollDown()) {
+      <button
+        type="button"
+        class="graph-page__scroll-hint"
+        (click)="scrollDown()"
+      >
+        <span>Weitere Diagramme</span>
+        <svg
+          class="graph-page__scroll-hint-icon"
+          viewBox="0 0 24 24"
+          width="20"
+          height="20"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <path
+            d="M6 9l6 6 6-6"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </button>
+    }
   </div>
 </div>

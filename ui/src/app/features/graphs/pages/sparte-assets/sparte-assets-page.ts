@@ -1,4 +1,13 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import {
+  afterNextRender,
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  ElementRef,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 
 import {
   aggregateBudgetByAsset,
@@ -33,6 +42,40 @@ import { createGraphFilterModel } from '../../filter-bar/graph-filter-model';
 export class SparteAssetsPage {
   private readonly data = inject(ProjectData);
   protected readonly filter = createGraphFilterModel(this.data.projects);
+
+  private readonly body = viewChild<ElementRef<HTMLElement>>('body');
+  /** True while the chart grid can still be scrolled further down. */
+  protected readonly canScrollDown = signal(false);
+
+  constructor() {
+    afterNextRender(() => {
+      const el = this.body()?.nativeElement;
+      if (!el) {
+        return;
+      }
+      this.updateScrollState();
+      const observer = new ResizeObserver(() => this.updateScrollState());
+      observer.observe(el);
+    });
+  }
+
+  protected onScroll(): void {
+    this.updateScrollState();
+  }
+
+  protected scrollDown(): void {
+    const el = this.body()?.nativeElement;
+    el?.scrollBy({ top: el.clientHeight * 0.8, behavior: 'smooth' });
+  }
+
+  private updateScrollState(): void {
+    const el = this.body()?.nativeElement;
+    if (!el) {
+      return;
+    }
+    const remaining = el.scrollHeight - el.scrollTop - el.clientHeight;
+    this.canScrollDown.set(remaining > 8);
+  }
 
   protected readonly budgetBySparte = computed(() =>
     aggregateBudgetBySparte(this.filter.filtered()),
