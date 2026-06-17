@@ -1,0 +1,93 @@
+<div class="filter-bar">
+  @if (showSparte() && sparten().length) {
+    <fieldset class="filter-bar__facet">
+      <legend class="filter-bar__legend">Sparte</legend>
+      <div class="filter-bar__chips">
+        <button
+          type="button"
+          class="filter-bar__chip"
+          [class.is-active]="!selectedSparten().size"
+          [attr.aria-pressed]="!selectedSparten().size"
+          (click)="clearSparten()"
+        >
+          Alle
+        </button>
+        @for (sparte of sparten(); track sparte) {
+          <button
+            type="button"
+            class="filter-bar__chip"
+            [class.is-active]="isSparteSelected(sparte)"
+            [attr.aria-pressed]="isSparteSelected(sparte)"
+            (click)="toggleSparte(sparte)"
+          >
+            {{ label(sparte) }}
+          </button>
+        }
+      </div>
+    </fieldset>
+  }
+
+  @if (showAsset() && assets().length) {
+    <fieldset class="filter-bar__facet">
+      <legend class="filter-bar__legend">{{ assetLabel() }}</legend>
+      <div class="filter-bar__chips">
+        <button
+          type="button"
+          class="filter-bar__chip"
+          [class.is-active]="!selectedAssets().size"
+          [attr.aria-pressed]="!selectedAssets().size"
+          (click)="clearAssets()"
+        >
+          Alle
+        </button>
+        @for (asset of assets(); track asset) {
+          <button
+            type="button"
+            class="filter-bar__chip"
+            [class.is-active]="isAssetSelected(asset)"
+            [attr.aria-pressed]="isAssetSelected(asset)"
+            (click)="toggleAsset(asset)"
+          >
+            {{ asset }}
+          </button>
+        }
+      </div>
+    </fieldset>
+  }
+
+  @if (showYear() && years().length) {
+    <fieldset class="filter-bar__facet">
+      <legend class="filter-bar__legend">Geschäftsjahr</legend>
+      <div class="filter-bar__chips">
+        <button
+          type="button"
+          class="filter-bar__chip"
+          [class.is-active]="!selectedYears().size"
+          [attr.aria-pressed]="!selectedYears().size"
+          (click)="clearYears()"
+        >
+          Alle
+        </button>
+        @for (year of years(); track year) {
+          <button
+            type="button"
+            class="filter-bar__chip"
+            [class.is-active]="isYearSelected(year)"
+            [attr.aria-pressed]="isYearSelected(year)"
+            (click)="toggleYear(year)"
+          >
+            {{ year }}
+          </button>
+        }
+      </div>
+    </fieldset>
+  }
+
+  <ng-content />
+
+  @if (hasActiveFilter()) {
+    <button type="button" class="filter-bar__reset" (click)="resetAll()">
+      Filter zurücksetzen
+    </button>
+  }
+</div>

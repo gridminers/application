@@ -1,0 +1,222 @@
+:host {
+  display: block;
+  height: 100%;
+}
+
+/* Year filter above the map. */
+.map-filter {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.map-filter__label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--on-surface-variant);
+}
+
+.map-filter__input {
+  appearance: none;
+  min-width: 12rem;
+  align-self: flex-start;
+  padding: 0.3rem 0.55rem;
+  font-family: inherit;
+  font-size: 0.82rem;
+  color: var(--on-surface);
+  background: var(--surface-container-high);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.map-filter__input:hover {
+  border-color: var(--outline);
+}
+
+.map-filter__input:focus-visible {
+  outline: 2px solid var(--primary-bright);
+  outline-offset: 2px;
+}
+
+.map {
+  grid-column: 1 / -1;
+  min-height: 540px;
+  height: 100%;
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-lg, var(--radius));
+  background: var(--surface-container-low);
+  overflow: hidden;
+}
+
+/* Themed Leaflet chrome to match the dark monochrome system. */
+.map ::ng-deep .leaflet-container {
+  background: var(--surface-container-low);
+  font-family: var(--font-sans);
+}
+
+.map ::ng-deep .leaflet-control-zoom a {
+  background: var(--surface-container);
+  color: var(--on-surface);
+  border-color: var(--outline-variant);
+}
+
+.map ::ng-deep .leaflet-control-zoom a:hover {
+  background: var(--surface-container-high);
+  color: var(--primary-bright);
+}
+
+.map ::ng-deep .leaflet-bar {
+  border-color: var(--outline-variant);
+  box-shadow: var(--shadow-sm);
+}
+
+.map ::ng-deep .leaflet-control-attribution {
+  background: color-mix(in srgb, var(--surface-base) 80%, transparent);
+  color: var(--on-surface-variant);
+}
+
+.map ::ng-deep .leaflet-control-attribution a {
+  color: var(--on-surface-variant);
+}
+
+/* Lighten the street/border lines baked into the base tile layer, while
+   keeping the dark background close to the app surface. */
+.map ::ng-deep .map-base {
+  filter: brightness(1.25) contrast(0.92);
+}
+
+/* Lighten the OSM label text baked into the labels-only tile layer. */
+.map ::ng-deep .map-labels {
+  filter: brightness(1.7);
+}
+
+/* Colour-to-division legend for the street markings. */
+.map ::ng-deep .map-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 10px;
+  background: color-mix(in srgb, var(--surface-base) 88%, transparent);
+  color: var(--on-surface);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  font-size: 0.75rem;
+  line-height: 1.2;
+}
+
+.map ::ng-deep .map-legend__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.map ::ng-deep .map-legend__swatch {
+  width: 14px;
+  height: 4px;
+  border-radius: 2px;
+  flex: 0 0 auto;
+}
+
+/* Themed click popup showing a street's per-division item counts. */
+.map ::ng-deep .leaflet-popup-content-wrapper {
+  background: var(--surface-container-high);
+  color: var(--on-surface);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+}
+
+.map ::ng-deep .leaflet-popup-content {
+  margin: 0;
+}
+
+.map ::ng-deep .leaflet-popup-tip {
+  background: var(--surface-container-high);
+  border: 1px solid var(--outline-variant);
+}
+
+.map ::ng-deep .leaflet-popup-close-button {
+  color: var(--on-surface-variant);
+}
+
+.map ::ng-deep .leaflet-popup-close-button:hover {
+  color: var(--on-surface);
+}
+
+.map ::ng-deep .street-popup {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  font-family: var(--font-sans);
+}
+
+.map ::ng-deep .street-popup__title {
+  margin: 0;
+  padding-right: 1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--on-surface);
+}
+
+.map ::ng-deep .street-popup__list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.map ::ng-deep .street-popup__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+}
+
+.map ::ng-deep .street-popup__swatch {
+  width: 14px;
+  height: 4px;
+  border-radius: 2px;
+  flex: 0 0 auto;
+}
+
+.map ::ng-deep .street-popup__label {
+  flex: 1 1 auto;
+  color: var(--on-surface-variant);
+}
+
+.map ::ng-deep .street-popup__count {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--on-surface);
+}
+
+.map ::ng-deep .street-popup__button {
+  appearance: none;
+  margin-top: 2px;
+  padding: 0.4rem 0.7rem;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--on-primary, var(--surface-base));
+  background: var(--primary-bright);
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.map ::ng-deep .street-popup__button:hover {
+  filter: brightness(1.08);
+}
+
+.map ::ng-deep .street-popup__button:focus-visible {
+  outline: 2px solid var(--primary-bright);
+  outline-offset: 2px;
+}

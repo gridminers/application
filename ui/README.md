@@ -36,6 +36,32 @@ ng build
 
 This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
 
+## Map street geometry
+
+The map page highlights managed streets using **precomputed** street geometry,
+shipped as the static asset `public/street-geometry.json`. This avoids any live
+geocoding at runtime (which previously hit the public Overpass/Nominatim APIs
+and tripped HTTP 429 errors).
+
+The asset is generated from the Braunschweig street register (`../straßen.txt`)
+by a one-time script. Regenerate it whenever the register changes:
+
+```bash
+npm run build:streets
+```
+
+The script issues a single Overpass query, merges the segments per street, keeps
+only the streets in the register, and writes the asset. Override the Overpass
+endpoint if the default mirrors are unavailable:
+
+```bash
+OVERPASS_ENDPOINT="https://maps.mail.ru/osm/tools/overpass/api/interpreter" npm run build:streets
+```
+
+The name-normalization rule in `scripts/build-street-geometry.mjs` must stay in
+sync with `normalizeStreetName` in
+`src/app/core/services/street-geometry-store.ts`.
+
 ## Running unit tests
 
 To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
