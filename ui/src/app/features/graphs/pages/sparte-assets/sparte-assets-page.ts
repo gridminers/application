@@ -13,6 +13,7 @@ import {
   aggregateBudgetByAsset,
   aggregateBudgetBySparte,
   aggregateCostComposition,
+  aggregateEigenFremdByYear,
   aggregatePricePerMeterByYear,
   ProjectData,
 } from '../../../../core/services/project-data';
@@ -21,6 +22,7 @@ import { sparteLabel } from '../../../../shared/chart-theme';
 import { BudgetByAsset } from '../../charts/budget-by-asset/budget-by-asset';
 import { BudgetByDivision } from '../../charts/budget-by-division/budget-by-division';
 import { CostComposition } from '../../charts/cost-composition/cost-composition';
+import { EigenFremdComparison } from '../../charts/eigen-fremd-comparison/eigen-fremd-comparison';
 import { PricePerMeter } from '../../charts/price-per-meter/price-per-meter';
 import { GraphFilterBar } from '../../filter-bar/graph-filter-bar';
 import { createGraphFilterModel } from '../../filter-bar/graph-filter-model';
@@ -34,6 +36,7 @@ import { createGraphFilterModel } from '../../filter-bar/graph-filter-model';
     BudgetByDivision,
     BudgetByAsset,
     CostComposition,
+    EigenFremdComparison,
     PricePerMeter,
   ],
   templateUrl: './sparte-assets-page.html',
@@ -88,6 +91,9 @@ export class SparteAssetsPage {
   );
   protected readonly pricePerMeter = computed(() =>
     aggregatePricePerMeterByYear(this.filter.filtered()),
+  );
+  protected readonly eigenFremd = computed(() =>
+    aggregateEigenFremdByYear(this.filter.filtered()),
   );
 
   protected readonly scope = computed(() => {

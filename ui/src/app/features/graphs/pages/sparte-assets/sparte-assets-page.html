@@ -45,6 +45,14 @@
       </app-chart-card>
 
       <app-chart-card
+        class="graph-page__wide"
+        title="Eigen- vs. Fremdleistung über die Jahre"
+        description="Linien für Eigen- und Fremdleistungen je Geschäftsjahr; respektiert die aktiven Filter."
+      >
+        <app-eigen-fremd-comparison [data]="eigenFremd()" />
+      </app-chart-card>
+
+      <app-chart-card
         title="Kostenarten gesamt"
         description="Aufteilung in Material-, Fremd-, Eigenleistungen, Ingenieurleistung Dritter und Zuschläge."
       >
