@@ -35,10 +35,6 @@ from django.core.validators import MinValueValidator
 from django.db import models
 
 
-# ---------------------------------------------------------------------------
-# Lookup-Tabellen
-# ---------------------------------------------------------------------------
-
 class Division(models.Model):
     """Sparte – organisatorische Einheit, der das Projekt zugeordnet ist."""
 
@@ -84,28 +80,37 @@ class Asset(models.Model):
         return self.name
 
 
-# ---------------------------------------------------------------------------
-# Kernmodell – Investitionsantrag
-# ---------------------------------------------------------------------------
+class Trade(models.Model):
+    """Gewerk"""
+    asset = models.OneToOneField(
+        Asset,
+        on_delete=models.CASCADE,
+        primary_key=True,
+        parent_link=True,
+        related_name="trade",
+    )
+
+    class Meta:
+        verbose_name = "Gewerk"
+
+
+class Street(models.Model):
+    """Straße"""
+    name = models.CharField(
+        max_length=300,
+        verbose_name="Straße",
+    )
+
+    class Meta:
+        verbose_name = "Straße"
+
 
 class Application(models.Model):
     """
-    Investitionsantrag.
-
-    Die abgeleiteten Kostenfelder (``subtotal``, ``material_surcharge``,
-    ``investment_surcharge``, ``total_surcharges``, ``total_costs``) werden
-    über dedizierte Berechnungsmethoden ermittelt und in ``save()``
-    automatisch in die Datenbank geschrieben.
-
-    Die Zuschlagssätze (``material_surcharge_rate``, ``investment_surcharge_rate``)
-    sind konfigurierbare Felder mit Standardwerten (17 % bzw. 23 %), da sich
-    diese Sätze ändern können.
-
-    Der Zahlungsplan (``payment_schedule``) wird als JSON-Liste gespeichert.
+    Antrag auf Mittelfreigabe
     """
 
     # -- Allgemeine Informationen --------------------------------------------
-
     project_title = models.CharField(
         max_length=255,
         verbose_name="Projekttitel",
@@ -138,13 +143,19 @@ class Application(models.Model):
         related_name="applications",
         verbose_name="Asset",
     )
+    trade = models.ForeignKey(
+        Trade,
+        on_delete=models.PROTECT,
+        related_name="applications",
+        verbose_name="Gewerk",
+    )
     psp_element = models.CharField(
         max_length=50,
         verbose_name="PSP-Element",
     )
-    street = models.CharField(
-        max_length=255,
-        blank=True,
+    street = models.ForeignKey(
+        Street,
+        on_delete=models.PROTECT,
         verbose_name="Straße",
     )
 
@@ -154,7 +165,7 @@ class Application(models.Model):
         max_digits=12,
         decimal_places=2,
         validators=[MinValueValidator(Decimal("0"))],
-        verbose_name="Leitungsmeter (m)",
+        verbose_name="Leitungs-/Trassenlänge der Maßnahme (m)",
     )
     cost_per_meter = models.DecimalField(
         max_digits=12,
@@ -164,7 +175,6 @@ class Application(models.Model):
     )
 
     # -- Kostenpositionen (netto) --------------------------------------------
-
     material_costs = models.DecimalField(
         max_digits=14,
         decimal_places=2,
@@ -191,7 +201,6 @@ class Application(models.Model):
     )
 
     # -- Konfigurierbare Zuschlagssätze -------------------------------------
-
     material_surcharge_rate = models.DecimalField(
         max_digits=5,
         decimal_places=4,
@@ -213,7 +222,6 @@ class Application(models.Model):
     )
 
     # -- Abgeleitete Kostenfelder (automatisch befüllt) ---------------------
-
     subtotal = models.DecimalField(
         max_digits=14,
         decimal_places=2,
