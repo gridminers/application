@@ -1,0 +1,48 @@
+<section class="hero">
+  <div class="container hero__inner">
+    <p class="hero__eyebrow">Netzinfrastruktur Braunschweig</p>
+    <h1 class="hero__title">
+      Wo das Geld im Netz <span class="hero__accent">hinfließt</span>.
+    </h1>
+    <p class="hero__lead">
+      Gridminers macht Projektaufträge der Netzgesellschaft sichtbar: extrahiert aus
+      Dokumenten, aufbereitet nach Sparte, Kosten und Zahlungsplan – als
+      interaktive Graphen.
+    </p>
+
+    <div class="hero__actions">
+      <a class="btn btn--primary" routerLink="/graphs">Graphen ansehen</a>
+      <a class="btn btn--ghost" href="#features">Mehr erfahren</a>
+    </div>
+
+    <dl class="stats" aria-label="Kennzahlen">
+      <div class="stat">
+        <dt class="stat__label">Projekte</dt>
+        <dd class="stat__value">{{ projectCount() }}</dd>
+      </div>
+      <div class="stat">
+        <dt class="stat__label">Gesamtvolumen</dt>
+        <dd class="stat__value">{{ totalBudget() | number: '1.0-0' }}&nbsp;€</dd>
+      </div>
+      <div class="stat">
+        <dt class="stat__label">Sparten</dt>
+        <dd class="stat__value">{{ sparteCount() }}</dd>
+      </div>
+    </dl>
+  </div>
+</section>
+
+<section id="features" class="features">
+  <div class="container">
+    <h2 class="features__title">Was diese Anwendung kann</h2>
+    <div class="features__grid">
+      @for (feature of features; track feature.title) {
+        <app-feature-card
+          [icon]="feature.icon"
+          [title]="feature.title"
+          [description]="feature.description"
+        />
+      }
+    </div>
+  </div>
+</section>

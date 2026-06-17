@@ -1,0 +1,23 @@
+<a class="skip-link" href="#main-content">Zum Inhalt springen</a>
+<header class="header">
+  <div class="container header__inner">
+    <a class="brand" routerLink="/" aria-label="Gridminers Startseite">
+      <span class="brand__mark" aria-hidden="true">⏚</span>
+      <span class="brand__name">Gridminers</span>
+      <span class="brand__city">Braunschweig</span>
+    </a>
+
+    <nav class="nav" aria-label="Hauptnavigation">
+      <a
+        routerLink="/"
+        routerLinkActive="nav__link--active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        class="nav__link"
+        >Start</a
+      >
+      <a routerLink="/graphs" routerLinkActive="nav__link--active" class="nav__link"
+        >Graphen</a
+      >
+    </nav>
+  </div>
+</header>

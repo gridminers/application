@@ -1,0 +1,7 @@
+<article class="card">
+  @if (icon()) {
+    <span class="card__icon" aria-hidden="true">{{ icon() }}</span>
+  }
+  <h3 class="card__title">{{ title() }}</h3>
+  <p class="card__desc">{{ description() }}</p>
+</article>

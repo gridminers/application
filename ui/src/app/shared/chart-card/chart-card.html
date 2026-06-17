@@ -1,0 +1,11 @@
+<section class="chart-card">
+  <header class="chart-card__header">
+    <h3 class="chart-card__title">{{ title() }}</h3>
+    @if (description()) {
+      <p class="chart-card__desc">{{ description() }}</p>
+    }
+  </header>
+  <div class="chart-card__body">
+    <ng-content />
+  </div>
+</section>
