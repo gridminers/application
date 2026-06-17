@@ -14,7 +14,7 @@ import * as L from 'leaflet';
 import { Sparte, SPARTE_LABELS, SPARTEN } from '../../../../core/models/sparte';
 import { aggregateStreetSparten, ProjectData } from '../../../../core/services/project-data';
 import { projectStreet } from '../../../../core/services/project-derivations';
-import { StreetGeocoder } from '../../../../core/services/street-geocoder';
+import { StreetGeometryStore } from '../../../../core/services/street-geometry-store';
 
 /** Geographic center of Braunschweig. */
 const BRAUNSCHWEIG_CENTER: L.LatLngTuple = [52.2689, 10.5268];
@@ -68,7 +68,7 @@ interface LocatedStreet {
 })
 export class MapPage implements AfterViewInit, OnDestroy {
   private readonly data = inject(ProjectData);
-  private readonly geocoder = inject(StreetGeocoder);
+  private readonly geometry = inject(StreetGeometryStore);
   private readonly router = inject(Router);
 
   private readonly mapContainer =
@@ -134,19 +134,24 @@ export class MapPage implements AfterViewInit, OnDestroy {
 
   /**
    * Locate every managed street within Braunschweig and cache its geometry.
-   * Streets with no confident match are skipped. Lookups run sequentially to
-   * stay within the geocoder's fair-use rate limit. After each lookup the
-   * drawn streets are rebuilt for the current year filter.
+   * Geometry comes from a precomputed static asset (loaded once), so no live
+   * geocoding requests are made. Streets with no precomputed match are skipped.
    */
   private async highlightManagedStreets(): Promise<void> {
     if (!this.map) {
       return;
     }
 
+    await this.geometry.load();
+    // The component may have been destroyed while loading the asset.
+    if (!this.map || !this.streetLayer) {
+      return;
+    }
+
     for (const { name } of this.data.streetSparten()) {
-      const geometry = await this.geocoder.geocode(name);
-      // The component may have been destroyed while awaiting the lookup.
-      if (!geometry || !this.map || !this.streetLayer) {
+      const geometry = this.geometry.geometry(name);
+      if (!geometry) {
+        console.warn(`No precomputed geometry for street "${name}"; skipping.`);
         continue;
       }
       const lines = geometryToLines(geometry);
@@ -154,9 +159,10 @@ export class MapPage implements AfterViewInit, OnDestroy {
         continue;
       }
       this.geometryByStreet.set(name, lines);
-      this.rebuildStreets();
-      this.frameStreets();
     }
+
+    this.rebuildStreets();
+    this.frameStreets();
   }
 
   /**
