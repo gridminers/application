@@ -1,0 +1,45 @@
+<div class="container graph-page">
+  <header class="graph-page__head">
+    <h1 class="graph-page__title">Gewerke</h1>
+    <p class="graph-page__lead">
+      Kosten nach Gewerk — den Netz-Assets („-netz"). Eine vertiefende Sicht auf
+      die Sparte / Assets, gefiltert über die einzelnen Gewerke.
+    </p>
+  </header>
+
+  <app-graph-filter-bar
+    class="graph-page__filters"
+    [showSparte]="false"
+    [showYear]="false"
+    assetLabel="Gewerk"
+    [assets]="filter.availableAssets()"
+    [selectedAssets]="filter.selectedAssets()"
+    (selectedAssetsChange)="filter.selectedAssets.set($event)"
+  />
+
+  <app-graph-scroll>
+    <app-chart-card
+      class="graph-page__wide"
+      title="Gesamtausgaben je Jahr"
+      description="Summe der Gesamtkosten aller Gewerke je Geschäftsjahr; respektiert den aktiven Gewerk-Filter."
+    >
+      <app-expenditures-by-year [data]="expendituresByYear()" />
+    </app-chart-card>
+
+    <app-chart-card
+      class="graph-page__wide"
+      title="Kostenarten je Gewerk"
+      description="Gesamtkosten je Gewerk, gestapelt nach Material-, Fremd-, Eigenleistungen, Ingenieurleistung Dritter und Zuschlägen."
+    >
+      <app-gewerke-breakdown [data]="gewerke()" />
+    </app-chart-card>
+
+    <app-chart-card
+      class="graph-page__wide"
+      title="Eigen- vs. Fremdleistung über die Jahre"
+      description="Linien für Eigen- und Fremdleistungen je Geschäftsjahr; Balken (rechte Achse) zeigen die absolute Differenz, eingefärbt nach der höheren Seite."
+    >
+      <app-eigen-fremd-comparison [data]="eigenFremd()" />
+    </app-chart-card>
+  </app-graph-scroll>
+</div>

@@ -1,0 +1,60 @@
+<div class="container graph-page">
+  <header class="graph-page__head">
+    <h1 class="graph-page__title">Straßendetails</h1>
+    <p class="graph-page__lead">
+      Anzahl der Projekte einer einzelnen Straße, je Sparte und Jahr. Wähle oben
+      eine Straße aus. Straßen werden aus den Projekttiteln abgeleitet.
+    </p>
+  </header>
+
+  <app-graph-filter-bar
+    class="graph-page__filters"
+    [sparten]="filter.availableSparten()"
+    [assets]="filter.availableAssets()"
+    [years]="filter.availableYears()"
+    [selectedSparten]="filter.selectedSparten()"
+    [selectedAssets]="filter.selectedAssets()"
+    [selectedYears]="filter.selectedYears()"
+    (selectedSpartenChange)="filter.selectedSparten.set($event)"
+    (selectedAssetsChange)="filter.selectedAssets.set($event)"
+    (selectedYearsChange)="filter.selectedYears.set($event)"
+  >
+    <div class="street-select">
+      <label class="street-select__label" for="street-select">Straße</label>
+      <select
+        id="street-select"
+        class="street-select__input"
+        (change)="onStreetChange($any($event.target).value)"
+      >
+        <option value="" disabled [selected]="!selectedStreet()">
+          — Straße wählen —
+        </option>
+        @for (street of streets(); track street) {
+          <option [value]="street" [selected]="street === selectedStreet()">
+            {{ street }}
+          </option>
+        }
+      </select>
+    </div>
+  </app-graph-filter-bar>
+
+  <app-graph-scroll>
+    <app-chart-card
+      class="graph-page__wide"
+      title="Projekte je Sparte"
+      [description]="
+        selectedStreet()
+          ? 'Anzahl der Projekte der gewählten Straße je Sparte, gestapelt nach Jahr.'
+          : 'Bitte oben eine Straße auswählen.'
+      "
+    >
+      @if (selectedStreet()) {
+        <app-street-projects [data]="chartData()" />
+      } @else {
+        <p class="street-empty">
+          Wähle eine Straße aus dem Filter oben, um die Projekte je Sparte zu sehen.
+        </p>
+      }
+    </app-chart-card>
+  </app-graph-scroll>
+</div>

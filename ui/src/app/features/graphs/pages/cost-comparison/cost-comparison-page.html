@@ -1,0 +1,38 @@
+<div class="container graph-page">
+  <header class="graph-page__head">
+    <h1 class="graph-page__title">Plan / Ist Kostenvergleich</h1>
+    <p class="graph-page__lead">
+      Geplanter Zahlungsplan gegenüber den tatsächlich realisierten Kosten je
+      Jahr. Ist-Werte liegen nur für abgeschlossene Jahre vor.
+    </p>
+  </header>
+
+  <app-graph-filter-bar
+    class="graph-page__filters"
+    [showYear]="false"
+    [sparten]="filter.availableSparten()"
+    [assets]="filter.availableAssets()"
+    [selectedSparten]="filter.selectedSparten()"
+    [selectedAssets]="filter.selectedAssets()"
+    (selectedSpartenChange)="filter.selectedSparten.set($event)"
+    (selectedAssetsChange)="filter.selectedAssets.set($event)"
+  />
+
+  <app-graph-scroll>
+    <app-chart-card
+      class="graph-page__wide"
+      title="Zahlungsplan vs. Ist über die Jahre"
+      description="Linien für geplante und tatsächliche Kosten je Jahr; Balken (rechte Achse) zeigen die absolute Differenz, eingefärbt nach der höheren Seite."
+    >
+      <app-plan-ist-comparison [data]="planIst()" />
+    </app-chart-card>
+
+    <app-chart-card
+      class="graph-page__wide"
+      title="Gesamtkosten Plan vs. Ist"
+      description="Summe der geplanten und tatsächlichen Kosten über alle abgeschlossenen Jahre."
+    >
+      <app-plan-ist-totals [data]="totals()" />
+    </app-chart-card>
+  </app-graph-scroll>
+</div>

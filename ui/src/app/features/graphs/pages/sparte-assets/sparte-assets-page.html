@@ -1,0 +1,69 @@
+<div class="container graph-page">
+  <header class="graph-page__head">
+    <h1 class="graph-page__title">Sparte / Assets</h1>
+    <p class="graph-page__lead">
+      Gesamtkosten und Kostenarten über alle Sparten und Assetklassen. Die Filter
+      oben wirken auf alle Diagramme dieser Seite.
+    </p>
+  </header>
+
+  <app-graph-filter-bar
+    class="graph-page__filters"
+    [sparten]="filter.availableSparten()"
+    [assets]="filter.availableAssets()"
+    [years]="filter.availableYears()"
+    [selectedSparten]="filter.selectedSparten()"
+    [selectedAssets]="filter.selectedAssets()"
+    [selectedYears]="filter.selectedYears()"
+    (selectedSpartenChange)="filter.selectedSparten.set($event)"
+    (selectedAssetsChange)="filter.selectedAssets.set($event)"
+    (selectedYearsChange)="filter.selectedYears.set($event)"
+  />
+
+  <app-graph-scroll>
+    <app-chart-card
+      class="graph-page__wide"
+      title="Gesamtausgaben je Jahr"
+      description="Summe der Gesamtkosten aller Projekte je Geschäftsjahr; respektiert die aktiven Filter."
+    >
+      <app-expenditures-by-year [data]="expendituresByYear()" />
+    </app-chart-card>
+
+    <app-chart-card
+      title="Gesamtkosten je Sparte"
+      description="Summe der Gesamtkosten aller Projekte, gruppiert nach Sparte."
+    >
+      <app-budget-by-division [data]="budgetBySparte()" />
+    </app-chart-card>
+
+    <app-chart-card
+      title="Gesamtkosten je Asset"
+      description="Summe der Gesamtkosten aller Projekte, gruppiert nach Assetklasse."
+    >
+      <app-budget-by-asset [data]="budgetByAsset()" />
+    </app-chart-card>
+
+    <app-chart-card
+      class="graph-page__wide"
+      title="Preis pro Meter"
+      description="Durchschnittlicher Preis je Meter Leitungslänge je Sparte im Verlauf der Jahre."
+    >
+      <app-price-per-meter [data]="pricePerMeter()" />
+    </app-chart-card>
+
+    <app-chart-card
+      class="graph-page__wide"
+      title="Eigen- vs. Fremdleistung über die Jahre"
+      description="Linien für Eigen- und Fremdleistungen je Geschäftsjahr; respektiert die aktiven Filter."
+    >
+      <app-eigen-fremd-comparison [data]="eigenFremd()" />
+    </app-chart-card>
+
+    <app-chart-card
+      title="Kostenarten gesamt"
+      description="Aufteilung in Material-, Fremd-, Eigenleistungen, Ingenieurleistung Dritter und Zuschläge."
+    >
+      <app-cost-composition [data]="composition()" [scope]="scope()" />
+    </app-chart-card>
+  </app-graph-scroll>
+</div>
