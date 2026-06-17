@@ -1,54 +1,151 @@
-from django.urls import path, include
+"""
+URL-Konfiguration für die Investitionsantrag-API.
+Streng basierend auf models(1).py (hand-edited, autoritativ).
+"""
+
+from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
 from .views import (
-    PlannedCostView, RealCostView,
-    StreetViewSet, DivisionViewSet, AssetViewSet, TradeViewSet,
+    ApplicationViewSet,
+    AssetViewSet,
+    DivisionViewSet,
+    PlannedCostAssetView,
+    PlannedCostAssetYearView,
+    PlannedCostDivisionView,
+    PlannedCostDivisionYearView,
+    PlannedCostListView,
+    PlannedCostStreetView,
+    PlannedCostStreetYearView,
+    PlannedCostTradeView,
+    PlannedCostTradeYearView,
+    PlannedCostYearView,
+    RealCostAssetView,
+    RealCostAssetYearView,
+    RealCostDivisionView,
+    RealCostDivisionYearView,
+    RealCostListView,
+    RealCostStreetView,
+    RealCostStreetYearView,
+    RealCostTradeView,
+    RealCostTradeYearView,
+    RealCostYearView,
+    StreetViewSet,
+    TradeViewSet,
 )
 
 router = DefaultRouter()
-router.register(r"streets", StreetViewSet, basename="streets")
-router.register(r"divisions", DivisionViewSet, basename="divisions")
-router.register(r"assets", AssetViewSet, basename="assets")
-router.register(r"trades", TradeViewSet, basename="trades")
-
-
-# Hilfsfunktion zur Erzeugung der Kosten-Pfade
-def cost_urls(prefix, view):
-    return [
-        # /api/<prefix>/                       -> Alle Jahre gesamt
-        path(f"{prefix}/", view.as_view(), name=f"{prefix}-all"),
-        # /api/<prefix>/year/<year>/           -> Spezielles Jahr gesamt
-        path(f"{prefix}/year/<int:year>/", view.as_view(), name=f"{prefix}-year"),
-
-        # Street
-        path(f"{prefix}/street/<int:street_id>/", view.as_view(),
-             name=f"{prefix}-street"),
-        path(f"{prefix}/street/<int:street_id>/<int:year>/", view.as_view(),
-             name=f"{prefix}-street-year"),
-
-        # Division (Sparte)
-        path(f"{prefix}/division/<int:division_id>/", view.as_view(),
-             name=f"{prefix}-division"),
-        path(f"{prefix}/division/<int:division_id>/<int:year>/", view.as_view(),
-             name=f"{prefix}-division-year"),
-
-        # Asset
-        path(f"{prefix}/asset/<int:asset_id>/", view.as_view(),
-             name=f"{prefix}-asset"),
-        path(f"{prefix}/asset/<int:asset_id>/<int:year>/", view.as_view(),
-             name=f"{prefix}-asset-year"),
-
-        # Trade (Gewerk)
-        path(f"{prefix}/trade/<int:trade_id>/", view.as_view(),
-             name=f"{prefix}-trade"),
-        path(f"{prefix}/trade/<int:trade_id>/<int:year>/", view.as_view(),
-             name=f"{prefix}-trade-year"),
-    ]
-
+router.register(r"streets", StreetViewSet, basename="street")
+router.register(r"divisions", DivisionViewSet, basename="division")
+router.register(r"assets", AssetViewSet, basename="asset")
+router.register(r"trades", TradeViewSet, basename="trade")
+router.register(r"applications", ApplicationViewSet, basename="application")
 
 urlpatterns = [
+    # Router-URLs
     path("api/", include(router.urls)),
-    *[path("api/", include((cost_urls("planned_costs", PlannedCostView), "planned")))],
-    *[path("api/", include((cost_urls("real_costs", RealCostView), "real")))],
+
+    # ── Planned Costs ────────────────────────────────────────────────────────
+    path(
+        "api/planned_costs/",
+        PlannedCostListView.as_view(),
+        name="planned-costs-list",
+    ),
+    path(
+        "api/planned_costs/year/<int:year>/",
+        PlannedCostYearView.as_view(),
+        name="planned-costs-year",
+    ),
+    path(
+        "api/planned_costs/street/<int:street_id>/",
+        PlannedCostStreetView.as_view(),
+        name="planned-costs-street",
+    ),
+    path(
+        "api/planned_costs/street/<int:street_id>/<int:year>/",
+        PlannedCostStreetYearView.as_view(),
+        name="planned-costs-street-year",
+    ),
+    path(
+        "api/planned_costs/division/<int:division_id>/",
+        PlannedCostDivisionView.as_view(),
+        name="planned-costs-division",
+    ),
+    path(
+        "api/planned_costs/division/<int:division_id>/<int:year>/",
+        PlannedCostDivisionYearView.as_view(),
+        name="planned-costs-division-year",
+    ),
+    path(
+        "api/planned_costs/asset/<int:asset_id>/",
+        PlannedCostAssetView.as_view(),
+        name="planned-costs-asset",
+    ),
+    path(
+        "api/planned_costs/asset/<int:asset_id>/<int:year>/",
+        PlannedCostAssetYearView.as_view(),
+        name="planned-costs-asset-year",
+    ),
+    path(
+        "api/planned_costs/trade/<int:trade_pk>/",
+        PlannedCostTradeView.as_view(),
+        name="planned-costs-trade",
+    ),
+    path(
+        "api/planned_costs/trade/<int:trade_pk>/<int:year>/",
+        PlannedCostTradeYearView.as_view(),
+        name="planned-costs-trade-year",
+    ),
+
+    # ── Real Costs ───────────────────────────────────────────────────────────
+    path(
+        "api/real_costs/",
+        RealCostListView.as_view(),
+        name="real-costs-list",
+    ),
+    path(
+        "api/real_costs/year/<int:year>/",
+        RealCostYearView.as_view(),
+        name="real-costs-year",
+    ),
+    path(
+        "api/real_costs/street/<int:street_id>/",
+        RealCostStreetView.as_view(),
+        name="real-costs-street",
+    ),
+    path(
+        "api/real_costs/street/<int:street_id>/<int:year>/",
+        RealCostStreetYearView.as_view(),
+        name="real-costs-street-year",
+    ),
+    path(
+        "api/real_costs/division/<int:division_id>/",
+        RealCostDivisionView.as_view(),
+        name="real-costs-division",
+    ),
+    path(
+        "api/real_costs/division/<int:division_id>/<int:year>/",
+        RealCostDivisionYearView.as_view(),
+        name="real-costs-division-year",
+    ),
+    path(
+        "api/real_costs/asset/<int:asset_id>/",
+        RealCostAssetView.as_view(),
+        name="real-costs-asset",
+    ),
+    path(
+        "api/real_costs/asset/<int:asset_id>/<int:year>/",
+        RealCostAssetYearView.as_view(),
+        name="real-costs-asset-year",
+    ),
+    path(
+        "api/real_costs/trade/<int:trade_pk>/",
+        RealCostTradeView.as_view(),
+        name="real-costs-trade",
+    ),
+    path(
+        "api/real_costs/trade/<int:trade_pk>/<int:year>/",
+        RealCostTradeYearView.as_view(),
+        name="real-costs-trade-year",
+    ),
 ]

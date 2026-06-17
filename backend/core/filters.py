@@ -1,26 +1,28 @@
+"""
+Django REST Framework – FilterSet für Investitionsantrag.
+Streng basierend auf models(1).py (hand-edited, autoritativ).
+"""
+
 import django_filters
-from .models import PlannedCost, RealCost
+
+from .models import Application
 
 
-class PlannedCostFilter(django_filters.FilterSet):
+class ApplicationFilter(django_filters.FilterSet):
+    """Filterset für Application-Modell."""
+
+    year = django_filters.NumberFilter(field_name="fiscal_year", lookup_expr="exact")
+    division_id = django_filters.NumberFilter(field_name="division__id", lookup_expr="exact")
+    asset_id = django_filters.NumberFilter(field_name="asset__id", lookup_expr="exact")
+    trade_id = django_filters.NumberFilter(field_name="trade__pk", lookup_expr="exact")
+    street_id = django_filters.NumberFilter(field_name="street__id", lookup_expr="exact")
+
     class Meta:
-        model = PlannedCost
-        fields = {
-            "year": ["exact", "gte", "lte"],
-            "street": ["exact"],
-            "division": ["exact"],
-            "asset": ["exact"],
-            "trade": ["exact"],
-        }
-
-
-class RealCostFilter(django_filters.FilterSet):
-    class Meta:
-        model = RealCost
-        fields = {
-            "year": ["exact", "gte", "lte"],
-            "street": ["exact"],
-            "division": ["exact"],
-            "asset": ["exact"],
-            "trade": ["exact"],
-        }
+        model = Application
+        fields = [
+            "fiscal_year",
+            "division",
+            "asset",
+            "trade",
+            "street",
+        ]

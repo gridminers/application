@@ -1,79 +1,37 @@
+"""
+Django REST Framework – Views für Investitionsantrag.
+Streng basierend auf models(1).py (hand-edited, autoritativ).
+
+Endpunkte:
+  /api/planned_costs/  [+ /year/<y>/, /street/<id>/, /division/<id>/, /asset/<id>/, /trade/<id>/]
+  /api/real_costs/     [dto.]
+  /api/streets/        [+ /<id>/]
+  /api/divisions/      [+ /<id>/]
+  /api/assets/         [+ /<id>/]
+  /api/trades/         [+ /<id>/]
+"""
+
+from decimal import Decimal
 
 from django.db.models import Sum
-from rest_framework import viewsets, mixins
-from rest_framework.views import APIView
+from rest_framework import generics, viewsets
+from rest_framework.decorators import action
 from rest_framework.response import Response
-from django_filters.rest_framework import DjangoFilterBackend
 
-from .models import Street, Division, Trade, Asset, PlannedCost, RealCost
+from .filters import ApplicationFilter
+from .models import Application, Asset, Division, Street, Trade
 from .serializers import (
-    StreetSerializer, DivisionSerializer, TradeSerializer, AssetSerializer,
-    PlannedCostSerializer, RealCostSerializer,
+    ApplicationSerializer,
+    AssetSerializer,
+    CostAggregationSerializer,
+    DivisionSerializer,
+    StreetSerializer,
+    TradeSerializer,
 )
-from .filters import PlannedCostFilter, RealCostFilter
 
 
-# ---------------------------------------------------------------------------
-# Basis-View für Kosten (Planned & Real)
-# ---------------------------------------------------------------------------
-class BaseCostView(APIView):
-    """
-    Generische View, die Kosten gefiltert nach optionalen
-    Parametern (street_id, division_id, asset_id, trade_id, year)
-    zurückgibt – inklusive Einzeldatensätze und Gesamtsumme.
-    """
-    model = None
-    serializer_class = None
+# ── Lookup ViewSets ────────────────────────────────────────────────────────────
 
-    def get_filtered_queryset(self, **kwargs):
-        qs = self.model.objects.all()
-
-        if kwargs.get("street_id") is not None:
-            qs = qs.filter(street_id=kwargs["street_id"])
-        if kwargs.get("division_id") is not None:
-            qs = qs.filter(division_id=kwargs["division_id"])
-        if kwargs.get("asset_id") is not None:
-            qs = qs.filter(asset_id=kwargs["asset_id"])
-        if kwargs.get("trade_id") is not None:
-            qs = qs.filter(trade_id=kwargs["trade_id"])
-        if kwargs.get("year") is not None:
-            qs = qs.filter(year=kwargs["year"])
-
-        return qs
-
-    def get(self, request, *args, **kwargs):
-        qs = self.get_filtered_queryset(**kwargs)
-
-        total = qs.aggregate(total=Sum("amount"))["total"] or 0
-        serializer = self.serializer_class(qs, many=True)
-
-        return Response({
-            "filters": {k: v for k, v in kwargs.items() if v is not None},
-            "total": total,
-            "count": qs.count(),
-            "results": serializer.data,
-        })
-
-
-# ---------------------------------------------------------------------------
-# Planned Costs
-# ---------------------------------------------------------------------------
-class PlannedCostView(BaseCostView):
-    model = PlannedCost
-    serializer_class = PlannedCostSerializer
-
-
-# ---------------------------------------------------------------------------
-# Real Costs
-# ---------------------------------------------------------------------------
-class RealCostView(BaseCostView):
-    model = RealCost
-    serializer_class = RealCostSerializer
-
-
-# ---------------------------------------------------------------------------
-# Stammdaten-ViewSets (Streets, Divisions, Assets, Trades)
-# ---------------------------------------------------------------------------
 class StreetViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Street.objects.all()
     serializer_class = StreetSerializer
@@ -92,3 +50,333 @@ class AssetViewSet(viewsets.ReadOnlyModelViewSet):
 class TradeViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Trade.objects.all()
     serializer_class = TradeSerializer
+
+
+# ── Basis-Mixin für Kosten-Aggregation ─────────────────────────────────────────
+
+class CostAggregationMixin:
+    """
+    Mischt Kosten-Felder nach fiscal_year, division, asset, trade, street.
+    Subklassen definieren das Zielfeld (planned vs. real) und den Serializer-
+    Feld-Namen.
+    """
+
+    cost_field = None  # z.B. "planned_total_costs"
+    label = None
+
+    def get_base_qs(self, request):
+        qs = Application.objects.all()
+        f = ApplicationFilter(request.GET, queryset=qs)
+        return f.qs
+
+    def aggregate(self, request, qs, *group_by):
+        total = (
+            qs.aggregate(total=Sum(self.cost_field))["total"] or Decimal("0")
+        )
+        return {
+            "count": qs.count(),
+            "total_costs": total,
+        }
+
+    def get_year_qs(self, request, year):
+        return self.get_base_qs(request).filter(fiscal_year=year)
+
+    def get_street_qs(self, request, street_id):
+        return self.get_base_qs(request).filter(street__id=street_id)
+
+    def get_division_qs(self, request, division_id):
+        return self.get_base_qs(request).filter(division__id=division_id)
+
+    def get_asset_qs(self, request, asset_id):
+        return self.get_base_qs(request).filter(asset__id=asset_id)
+
+    def get_trade_qs(self, request, trade_pk):
+        return self.get_base_qs(request).filter(trade__pk=trade_pk)
+
+
+# ── Planned Costs ─────────────────────────────────────────────────────────────
+
+class PlannedCostBase(CostAggregationMixin):
+    cost_field = "planned_total_costs"
+    label = "planned"
+
+    def get(self, request):
+        data = self.aggregate(request, self.get_base_qs(request))
+        return Response(data)
+
+    def get_year(self, request, year):
+        qs = self.get_year_qs(request, year)
+        data = self.aggregate(request, qs)
+        data["fiscal_year"] = year
+        return Response(data)
+
+    def get_street(self, request, street_id):
+        qs = self.get_street_qs(request, street_id)
+        data = self.aggregate(request, qs)
+        data["street_id"] = street_id
+        return Response(data)
+
+    def get_street_year(self, request, street_id, year):
+        qs = self.get_street_qs(request, street_id).filter(fiscal_year=year)
+        data = self.aggregate(request, qs)
+        data["street_id"] = street_id
+        data["fiscal_year"] = year
+        return Response(data)
+
+    def get_division(self, request, division_id):
+        qs = self.get_division_qs(request, division_id)
+        data = self.aggregate(request, qs)
+        data["division_id"] = division_id
+        return Response(data)
+
+    def get_division_year(self, request, division_id, year):
+        qs = self.get_division_qs(request, division_id).filter(fiscal_year=year)
+        data = self.aggregate(request, qs)
+        data["division_id"] = division_id
+        data["fiscal_year"] = year
+        return Response(data)
+
+    def get_asset(self, request, asset_id):
+        qs = self.get_asset_qs(request, asset_id)
+        data = self.aggregate(request, qs)
+        data["asset_id"] = asset_id
+        return Response(data)
+
+    def get_asset_year(self, request, asset_id, year):
+        qs = self.get_asset_qs(request, asset_id).filter(fiscal_year=year)
+        data = self.aggregate(request, qs)
+        data["asset_id"] = asset_id
+        data["fiscal_year"] = year
+        return Response(data)
+
+    def get_trade(self, request, trade_pk):
+        qs = self.get_trade_qs(request, trade_pk)
+        data = self.aggregate(request, qs)
+        data["trade_pk"] = trade_pk
+        return Response(data)
+
+    def get_trade_year(self, request, trade_pk, year):
+        qs = self.get_trade_qs(request, trade_pk).filter(fiscal_year=year)
+        data = self.aggregate(request, qs)
+        data["trade_pk"] = trade_pk
+        data["fiscal_year"] = year
+        return Response(data)
+
+
+class PlannedCostListView(PlannedCostBase, generics.GenericAPIView):
+    """GET /api/planned_costs/"""
+
+    def get(self, request):
+        return super().get(request)
+
+
+class PlannedCostYearView(PlannedCostBase, generics.GenericAPIView):
+    """GET /api/planned_costs/year/<int:year>/"""
+
+    def get(self, request, year):
+        return super().get_year(request, year)
+
+
+class PlannedCostStreetView(PlannedCostBase, generics.GenericAPIView):
+    """GET /api/planned_costs/street/<int:street_id>/"""
+
+    def get(self, request, street_id):
+        return super().get_street(request, street_id)
+
+
+class PlannedCostStreetYearView(PlannedCostBase, generics.GenericAPIView):
+    """GET /api/planned_costs/street/<int:street_id>/<int:year>/"""
+
+    def get(self, request, street_id, year):
+        return super().get_street_year(request, street_id, year)
+
+
+class PlannedCostDivisionView(PlannedCostBase, generics.GenericAPIView):
+    """GET /api/planned_costs/division/<int:division_id>/"""
+
+    def get(self, request, division_id):
+        return super().get_division(request, division_id)
+
+
+class PlannedCostDivisionYearView(PlannedCostBase, generics.GenericAPIView):
+    """GET /api/planned_costs/division/<int:division_id>/<int:year>/"""
+
+    def get(self, request, division_id, year):
+        return super().get_division_year(request, division_id, year)
+
+
+class PlannedCostAssetView(PlannedCostBase, generics.GenericAPIView):
+    """GET /api/planned_costs/asset/<int:asset_id>/"""
+
+    def get(self, request, asset_id):
+        return super().get_asset(request, asset_id)
+
+
+class PlannedCostAssetYearView(PlannedCostBase, generics.GenericAPIView):
+    """GET /api/planned_costs/asset/<int:asset_id>/<int:year>/"""
+
+    def get(self, request, asset_id, year):
+        return super().get_asset_year(request, asset_id, year)
+
+
+class PlannedCostTradeView(PlannedCostBase, generics.GenericAPIView):
+    """GET /api/planned_costs/trade/<int:trade_pk>/"""
+
+    def get(self, request, trade_pk):
+        return super().get_trade(request, trade_pk)
+
+
+class PlannedCostTradeYearView(PlannedCostBase, generics.GenericAPIView):
+    """GET /api/planned_costs/trade/<int:trade_pk>/<int:year>/"""
+
+    def get(self, request, trade_pk, year):
+        return super().get_trade_year(request, trade_pk, year)
+
+
+# ── Real Costs ─────────────────────────────────────────────────────────────────
+
+class RealCostBase(CostAggregationMixin):
+    cost_field = "real_total_costs"
+    label = "real"
+
+    def get(self, request):
+        data = self.aggregate(request, self.get_base_qs(request))
+        return Response(data)
+
+    def get_year(self, request, year):
+        qs = self.get_year_qs(request, year)
+        data = self.aggregate(request, qs)
+        data["fiscal_year"] = year
+        return Response(data)
+
+    def get_street(self, request, street_id):
+        qs = self.get_street_qs(request, street_id)
+        data = self.aggregate(request, qs)
+        data["street_id"] = street_id
+        return Response(data)
+
+    def get_street_year(self, request, street_id, year):
+        qs = self.get_street_qs(request, street_id).filter(fiscal_year=year)
+        data = self.aggregate(request, qs)
+        data["street_id"] = street_id
+        data["fiscal_year"] = year
+        return Response(data)
+
+    def get_division(self, request, division_id):
+        qs = self.get_division_qs(request, division_id)
+        data = self.aggregate(request, qs)
+        data["division_id"] = division_id
+        return Response(data)
+
+    def get_division_year(self, request, division_id, year):
+        qs = self.get_division_qs(request, division_id).filter(fiscal_year=year)
+        data = self.aggregate(request, qs)
+        data["division_id"] = division_id
+        data["fiscal_year"] = year
+        return Response(data)
+
+    def get_asset(self, request, asset_id):
+        qs = self.get_asset_qs(request, asset_id)
+        data = self.aggregate(request, qs)
+        data["asset_id"] = asset_id
+        return Response(data)
+
+    def get_asset_year(self, request, asset_id, year):
+        qs = self.get_asset_qs(request, asset_id).filter(fiscal_year=year)
+        data = self.aggregate(request, qs)
+        data["asset_id"] = asset_id
+        data["fiscal_year"] = year
+        return Response(data)
+
+    def get_trade(self, request, trade_pk):
+        qs = self.get_trade_qs(request, trade_pk)
+        data = self.aggregate(request, qs)
+        data["trade_pk"] = trade_pk
+        return Response(data)
+
+    def get_trade_year(self, request, trade_pk, year):
+        qs = self.get_trade_qs(request, trade_pk).filter(fiscal_year=year)
+        data = self.aggregate(request, qs)
+        data["trade_pk"] = trade_pk
+        data["fiscal_year"] = year
+        return Response(data)
+
+
+class RealCostListView(RealCostBase, generics.GenericAPIView):
+    """GET /api/real_costs/"""
+
+    def get(self, request):
+        return super().get(request)
+
+
+class RealCostYearView(RealCostBase, generics.GenericAPIView):
+    """GET /api/real_costs/year/<int:year>/"""
+
+    def get(self, request, year):
+        return super().get_year(request, year)
+
+
+class RealCostStreetView(RealCostBase, generics.GenericAPIView):
+    """GET /api/real_costs/street/<int:street_id>/"""
+
+    def get(self, request, street_id):
+        return super().get_street(request, street_id)
+
+
+class RealCostStreetYearView(RealCostBase, generics.GenericAPIView):
+    """GET /api/real_costs/street/<int:street_id>/<int:year>/"""
+
+    def get(self, request, street_id, year):
+        return super().get_street_year(request, street_id, year)
+
+
+class RealCostDivisionView(RealCostBase, generics.GenericAPIView):
+    """GET /api/real_costs/division/<int:division_id>/"""
+
+    def get(self, request, division_id):
+        return super().get_division(request, division_id)
+
+
+class RealCostDivisionYearView(RealCostBase, generics.GenericAPIView):
+    """GET /api/real_costs/division/<int:division_id>/<int:year>/"""
+
+    def get(self, request, division_id, year):
+        return super().get_division_year(request, division_id, year)
+
+
+class RealCostAssetView(RealCostBase, generics.GenericAPIView):
+    """GET /api/real_costs/asset/<int:asset_id>/"""
+
+    def get(self, request, asset_id):
+        return super().get_asset(request, asset_id)
+
+
+class RealCostAssetYearView(RealCostBase, generics.GenericAPIView):
+    """GET /api/real_costs/asset/<int:asset_id>/<int:year>/"""
+
+    def get(self, request, asset_id, year):
+        return super().get_asset_year(request, asset_id, year)
+
+
+class RealCostTradeView(RealCostBase, generics.GenericAPIView):
+    """GET /api/real_costs/trade/<int:trade_pk>/"""
+
+    def get(self, request, trade_pk):
+        return super().get_trade(request, trade_pk)
+
+
+class RealCostTradeYearView(RealCostBase, generics.GenericAPIView):
+    """GET /api/real_costs/trade/<int:trade_pk>/<int:year>/"""
+
+    def get(self, request, trade_pk, year):
+        return super().get_trade_year(request, trade_pk, year)
+
+
+# ── Application ViewSet (für Detail-Ansicht) ───────────────────────────────────
+
+class ApplicationViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Application.objects.select_related(
+        "division", "asset", "trade", "street"
+    ).all()
+    serializer_class = ApplicationSerializer
+    filterset_class = ApplicationFilter
