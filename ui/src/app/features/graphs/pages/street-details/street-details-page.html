@@ -24,12 +24,15 @@
       <select
         id="street-select"
         class="street-select__input"
-        [value]="selectedStreet()"
         (change)="onStreetChange($any($event.target).value)"
       >
-        <option value="" disabled>— Straße wählen —</option>
+        <option value="" disabled [selected]="!selectedStreet()">
+          — Straße wählen —
+        </option>
         @for (street of streets(); track street) {
-          <option [value]="street">{{ street }}</option>
+          <option [value]="street" [selected]="street === selectedStreet()">
+            {{ street }}
+          </option>
         }
       </select>
     </div>
