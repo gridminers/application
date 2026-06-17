@@ -1,12 +1,7 @@
-import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import type { EChartsCoreOption } from 'echarts/core';
 
-import { Sparte } from '../../../../core/models/sparte';
-import {
-  CostComposition as CostCompositionData,
-  CostCompositionBySparte,
-  sumCostCompositions,
-} from '../../../../core/services/project-data';
+import { CostComposition as CostCompositionData } from '../../../../core/services/project-data';
 import { Echart } from '../../../../shared/echart/echart';
 import {
   CATEGORY_PALETTE,
@@ -15,7 +10,6 @@ import {
   darkTooltip,
   CHART_SURFACE,
   CHART_TEXT,
-  sparteLabel,
 } from '../../../../shared/chart-theme';
 
 interface Slice {
@@ -24,96 +18,26 @@ interface Slice {
 }
 
 /**
- * Pie chart: cost composition (Kostenarten). It can be scoped with a two-level
- * filter — first a division (Sparte), then optionally one or more asset classes
- * within that division. With nothing selected (the default) it shows the total
- * across everything.
+ * Donut chart of the cost composition (Kostenarten). Presentational: it renders
+ * whatever {@link CostCompositionData} total it is given — scoping is handled
+ * by the page-level filter bar.
  */
 @Component({
   selector: 'app-cost-composition',
   imports: [Echart],
-  templateUrl: './cost-composition.html',
-  styleUrl: './cost-composition.css',
+  template: `<app-echart [options]="options()" [ariaLabel]="ariaLabel()" />`,
+  styles: `:host { display: block; height: 100%; }`,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CostComposition {
-  /** Cost composition grouped by division and asset class. */
-  readonly data = input.required<readonly CostCompositionBySparte[]>();
+  /** Aggregated cost composition to display. */
+  readonly data = input.required<CostCompositionData>();
 
-  /** Selected division; null means "all divisions" (the default). */
-  private readonly selectedSparte = signal<Sparte | null>(null);
-
-  /** Selected asset classes within the division; empty means "all of them". */
-  private readonly selectedAssets = signal<ReadonlySet<string>>(new Set<string>());
-
-  /** Divisions available to filter by. */
-  readonly sparten = computed(() => this.data().map((d) => d.sparte));
-
-  /** Whether a specific division is selected. */
-  readonly hasSparte = computed(() => this.selectedSparte() !== null);
-
-  /** Whether at least one asset class is selected. */
-  readonly hasAssets = computed(() => this.selectedAssets().size > 0);
-
-  /** The data entry for the selected division, if any. */
-  private readonly sparteEntry = computed(() => {
-    const sparte = this.selectedSparte();
-    return sparte === null ? null : (this.data().find((d) => d.sparte === sparte) ?? null);
-  });
-
-  /** Asset classes available once a division is selected. */
-  readonly assets = computed(() => this.sparteEntry()?.assets.map((a) => a.asset) ?? []);
-
-  label(sparte: Sparte): string {
-    return sparteLabel(sparte);
-  }
-
-  isSparteSelected(sparte: Sparte): boolean {
-    return this.selectedSparte() === sparte;
-  }
-
-  isAssetSelected(asset: string): boolean {
-    return this.selectedAssets().has(asset);
-  }
-
-  /** Select a division (or null for "all"); resets the asset selection. */
-  selectSparte(sparte: Sparte | null): void {
-    this.selectedSparte.set(sparte);
-    this.selectedAssets.set(new Set<string>());
-  }
-
-  toggleAsset(asset: string): void {
-    this.selectedAssets.update((current) => {
-      const next = new Set(current);
-      if (next.has(asset)) {
-        next.delete(asset);
-      } else {
-        next.add(asset);
-      }
-      return next;
-    });
-  }
-
-  /** Clear the asset selection (back to all assets of the division). */
-  resetAssets(): void {
-    this.selectedAssets.set(new Set<string>());
-  }
-
-  /** Cost composition for the active scope. */
-  private readonly total = computed<CostCompositionData>(() => {
-    const entry = this.sparteEntry();
-    if (entry === null) {
-      return sumCostCompositions(this.data().map((d) => d.composition));
-    }
-    const selected = this.selectedAssets();
-    const rows = entry.assets.filter(
-      (a) => selected.size === 0 || selected.has(a.asset),
-    );
-    return sumCostCompositions(rows.map((a) => a.composition));
-  });
+  /** Short description of the active scope, woven into the accessible label. */
+  readonly scope = input<string>('alle Sparten');
 
   private readonly slices = computed<Slice[]>(() => {
-    const d = this.total();
+    const d = this.data();
     return [
       { name: 'Materialkosten', value: d.materialkosten },
       { name: 'Fremdleistungen', value: d.fremdleistungen },
@@ -121,22 +45,6 @@ export class CostComposition {
       { name: 'Ingenieurleistung Dritte', value: d.ingenieurleistungDritte },
       { name: 'Zuschläge', value: d.zuschlaege },
     ];
-  });
-
-  /** Short description of the active filter scope, used in labels. */
-  readonly scope = computed(() => {
-    const sparte = this.selectedSparte();
-    if (sparte === null) {
-      return 'alle Sparten';
-    }
-    const selected = this.selectedAssets();
-    if (selected.size === 0) {
-      return `${sparteLabel(sparte)}, alle Assetklassen`;
-    }
-    const assets = this.assets()
-      .filter((a) => selected.has(a))
-      .join(', ');
-    return `${sparteLabel(sparte)}: ${assets}`;
   });
 
   readonly ariaLabel = computed(

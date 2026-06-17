@@ -1,0 +1,40 @@
+<div class="container graph-page">
+  <header class="graph-page__head">
+    <h1 class="graph-page__title">Gewerke</h1>
+    <p class="graph-page__lead">
+      Kosten nach ausführendem Gewerk — eine vertiefende Sicht auf Sparten und
+      Assets. Das Gewerk wird aus Sparte und Asset abgeleitet.
+    </p>
+  </header>
+
+  <app-graph-filter-bar
+    class="graph-page__filters"
+    [sparten]="filter.availableSparten()"
+    [assets]="filter.availableAssets()"
+    [years]="filter.availableYears()"
+    [selectedSparten]="filter.selectedSparten()"
+    [selectedAssets]="filter.selectedAssets()"
+    [selectedYears]="filter.selectedYears()"
+    (selectedSpartenChange)="filter.selectedSparten.set($event)"
+    (selectedAssetsChange)="filter.selectedAssets.set($event)"
+    (selectedYearsChange)="filter.selectedYears.set($event)"
+  />
+
+  <div class="graph-page__body">
+    <app-chart-card
+      class="graph-page__wide"
+      title="Kostenarten je Gewerk"
+      description="Gesamtkosten je Gewerk, gestapelt nach Material-, Fremd-, Eigenleistungen, Ingenieurleistung Dritter und Zuschlägen."
+    >
+      <app-gewerke-breakdown [data]="gewerke()" />
+    </app-chart-card>
+
+    <app-chart-card
+      class="graph-page__wide"
+      title="Eigen- vs. Fremdleistung über die Jahre"
+      description="Linien für Eigen- und Fremdleistungen je Geschäftsjahr; Balken (rechte Achse) zeigen die absolute Differenz, eingefärbt nach der höheren Seite."
+    >
+      <app-eigen-fremd-comparison [data]="eigenFremd()" />
+    </app-chart-card>
+  </div>
+</div>

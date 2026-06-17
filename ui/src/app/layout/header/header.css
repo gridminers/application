@@ -63,6 +63,13 @@
 .nav {
   display: flex;
   gap: var(--space-1);
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.nav__link {
+  white-space: nowrap;
 }
 
 .nav__link {

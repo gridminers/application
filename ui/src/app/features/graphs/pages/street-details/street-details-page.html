@@ -1,0 +1,52 @@
+<div class="container graph-page">
+  <header class="graph-page__head">
+    <h1 class="graph-page__title">Straßendetails</h1>
+    <p class="graph-page__lead">
+      Anzahl der Projekte je Straße, aufgeschlüsselt nach Sparte. Wähle eine
+      Straße, um in die einzelnen Jahre einzutauchen. Straßen werden aus den
+      Projekttiteln abgeleitet.
+    </p>
+  </header>
+
+  <app-graph-filter-bar
+    class="graph-page__filters"
+    [sparten]="filter.availableSparten()"
+    [assets]="filter.availableAssets()"
+    [years]="filter.availableYears()"
+    [selectedSparten]="filter.selectedSparten()"
+    [selectedAssets]="filter.selectedAssets()"
+    [selectedYears]="filter.selectedYears()"
+    (selectedSpartenChange)="filter.selectedSparten.set($event)"
+    (selectedAssetsChange)="filter.selectedAssets.set($event)"
+    (selectedYearsChange)="filter.selectedYears.set($event)"
+  >
+    <div class="street-select">
+      <label class="street-select__label" for="street-select">Straße</label>
+      <select
+        id="street-select"
+        class="street-select__input"
+        [value]="selectedStreet()"
+        (change)="onStreetChange($any($event.target).value)"
+      >
+        <option value="">Alle Straßen</option>
+        @for (street of availableStreets(); track street) {
+          <option [value]="street">{{ street }}</option>
+        }
+      </select>
+    </div>
+  </app-graph-filter-bar>
+
+  <div class="graph-page__body">
+    <app-chart-card
+      class="graph-page__wide"
+      title="Projekte je Straße"
+      [description]="
+        selectedStreet()
+          ? 'Anzahl der Projekte für die gewählte Straße je Jahr, gestapelt nach Sparte.'
+          : 'Anzahl der Projekte je Straße, gestapelt nach Sparte.'
+      "
+    >
+      <app-street-projects [data]="chartData()" />
+    </app-chart-card>
+  </div>
+</div>

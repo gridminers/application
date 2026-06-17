@@ -1,0 +1,46 @@
+<div class="container graph-page">
+  <header class="graph-page__head">
+    <h1 class="graph-page__title">Sparte / Assets</h1>
+    <p class="graph-page__lead">
+      Gesamtkosten und Kostenarten über alle Sparten und Assetklassen. Die Filter
+      oben wirken auf alle Diagramme dieser Seite.
+    </p>
+  </header>
+
+  <app-graph-filter-bar
+    class="graph-page__filters"
+    [sparten]="filter.availableSparten()"
+    [assets]="filter.availableAssets()"
+    [years]="filter.availableYears()"
+    [selectedSparten]="filter.selectedSparten()"
+    [selectedAssets]="filter.selectedAssets()"
+    [selectedYears]="filter.selectedYears()"
+    (selectedSpartenChange)="filter.selectedSparten.set($event)"
+    (selectedAssetsChange)="filter.selectedAssets.set($event)"
+    (selectedYearsChange)="filter.selectedYears.set($event)"
+  />
+
+  <div class="graph-page__body">
+    <app-chart-card
+      title="Gesamtkosten je Sparte"
+      description="Summe der Gesamtkosten aller Projekte, gruppiert nach Sparte."
+    >
+      <app-budget-by-division [data]="budgetBySparte()" />
+    </app-chart-card>
+
+    <app-chart-card
+      title="Kostenarten gesamt"
+      description="Aufteilung in Material-, Fremd-, Eigenleistungen, Ingenieurleistung Dritter und Zuschläge."
+    >
+      <app-cost-composition [data]="composition()" [scope]="scope()" />
+    </app-chart-card>
+
+    <app-chart-card
+      class="graph-page__wide"
+      title="Preis pro Meter"
+      description="Vergleich der Kosten je Meter Leitungslänge nach Projekt."
+    >
+      <app-price-per-meter [data]="pricePerMeter()" />
+    </app-chart-card>
+  </div>
+</div>

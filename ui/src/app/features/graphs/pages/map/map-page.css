@@ -1,0 +1,37 @@
+:host {
+  display: block;
+  height: 100%;
+}
+
+.map-placeholder {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  min-height: 0;
+  padding: var(--space-8);
+  text-align: center;
+  background: var(--surface-container-low);
+  border: 1px dashed var(--outline);
+  border-radius: var(--radius-lg, var(--radius));
+}
+
+.map-placeholder__mark {
+  font-size: 3rem;
+  line-height: 1;
+}
+
+.map-placeholder__title {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--on-surface);
+}
+
+.map-placeholder__text {
+  max-width: 46ch;
+  font-size: 0.9rem;
+  color: var(--on-surface-variant);
+}
