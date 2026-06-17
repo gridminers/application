@@ -4,4 +4,5 @@ django-filter==25.2
 djangorestframework==3.17.1
 psycopg==3.3.4
 psycopg-binary==3.3.4
+RapidFuzz==3.14.5
 sqlparse==0.5.5

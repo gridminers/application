@@ -92,6 +92,10 @@ class Trade(models.Model):
 
     class Meta:
         verbose_name = "Gewerk"
+        verbose_name_plural = "Gewerke"
+
+    def __str__(self) -> str:
+        return str(self.asset)
 
 
 class Street(models.Model):
@@ -103,6 +107,10 @@ class Street(models.Model):
 
     class Meta:
         verbose_name = "Straße"
+        verbose_name_plural = "Straßen"
+
+    def __str__(self) -> str:
+        return self.name
 
 
 class Application(models.Model):
@@ -308,58 +316,8 @@ class Application(models.Model):
 
     class Meta:
         ordering = ["-fiscal_year", "project_title"]
-        verbose_name = "Antrag"
-        verbose_name_plural = "Anträge"
+        verbose_name = "Antrag auf Mittelfreigabe"
+        verbose_name_plural = "Anträge auf Mittelfreigabe"
 
     def __str__(self) -> str:
         return f"{self.project_title} ({self.fiscal_year})"
-
-    # def compute_subtotal(self) -> Decimal:
-    #     """
-    #     Berechnet die Gesamtkosten ohne Zuschläge.
-    #
-    #     Formel: Materialkosten + Fremdleistungen + Eigenleistungen
-    #             + Ingenieurleistungen Dritte
-    #     """
-    #     return (
-    #             self.material_costs
-    #             + self.external_services
-    #             + self.internal_services
-    #             + self.engineering_services
-    #     )
-    #
-    # def compute_material_surcharge(self) -> Decimal:
-    #     """
-    #     Berechnet die Materialkostenzuschläge.
-    #
-    #     Formel: Materialkosten netto × Zuschlagssatz Material
-    #     """
-    #     return (self.material_costs * self.material_surcharge_rate).quantize(
-    #         Decimal("0.01")
-    #     )
-    #
-    # def compute_investment_surcharge(self) -> Decimal:
-    #     """
-    #     Berechnet die Investitionszuschläge.
-    #
-    #     Formel: Gesamtkosten ohne Zuschläge × Zuschlagssatz Investition
-    #     """
-    #     return (self.compute_subtotal() * self.investment_surcharge_rate).quantize(
-    #         Decimal("0.01")
-    #     )
-    #
-    # def compute_total_surcharges(self) -> Decimal:
-    #     """
-    #     Berechnet die Zwischensumme aller Zuschläge.
-    #
-    #     Formel: Materialkostenzuschläge + Investitionszuschläge
-    #     """
-    #     return self.compute_material_surcharge() + self.compute_investment_surcharge()
-    #
-    # def compute_total_costs(self) -> Decimal:
-    #     """
-    #     Berechnet die Gesamtkosten.
-    #
-    #     Formel: Gesamtkosten ohne Zuschläge + Zwischensumme Zuschläge
-    #     """
-    #     return self.compute_subtotal() + self.compute_total_surcharges()

@@ -25,9 +25,12 @@ from .field_mapping import (
 # Importe an die tatsächliche App anpassen.
 from .models import Application, Asset, Division, Street, Trade
 from .parsers import ParserRegistry, default_registry
-from .street_matching import StreetMatcher, SubstringStreetMatcher
+from .street_matching import RapidFuzzStreetMatcher, StreetMatcher
 
 _PERCENT_IN_LABEL = re.compile(r"\(\s*(\d+(?:[.,]\d+)?)\s*%\s*\)")
+
+# Ein Asset ist ein Gewerk, wenn sein Name hierauf endet.
+GEWERK_NAME_SUFFIX = "Netz"
 
 
 class DuplicateDocumentError(Exception):
@@ -47,7 +50,7 @@ class ApplicationImporter:
             street_matcher: Optional[StreetMatcher] = None,
     ) -> None:
         self._parsers = parser_registry or default_registry()
-        self._street_matcher = street_matcher or SubstringStreetMatcher()
+        self._street_matcher = street_matcher or RapidFuzzStreetMatcher()
 
     @transaction.atomic
     def import_export(self, export: Mapping[str, Any]) -> Application:
@@ -122,8 +125,7 @@ class ApplicationImporter:
             name = self._parsers.parse(asset_field)
             asset, _ = Asset.objects.get_or_create(name=name)
             data["asset"] = asset
-            # Gewerk nur setzen, wenn das Asset auch eines ist.
-            data["trade"] = Trade.objects.filter(pk=asset.pk).first()
+            data["trade"] = self._resolve_trade(asset)
 
         # Straße aus dem (unstrukturierten) Projekttitel ableiten.
         data["street"] = self._street_matcher.match(
@@ -131,6 +133,19 @@ class ApplicationImporter:
         )
 
     # -- Helfer --------------------------------------------------------------
+
+    @staticmethod
+    def _resolve_trade(asset: Asset) -> Optional[Trade]:
+        """Liefert das Gewerk zum Asset.
+
+        Endet der Asset-Name auf ``GEWERK_NAME_SUFFIX`` ('Netz'), ist es auf
+        jeden Fall ein Gewerk; der Datensatz wird bei Bedarf angelegt.
+        Andernfalls wird ein bereits vorhandenes Gewerk übernommen, sonst nichts.
+        """
+        if asset.name.casefold().endswith(GEWERK_NAME_SUFFIX.casefold()):
+            trade, _ = Trade.objects.get_or_create(asset=asset)
+            return trade
+        return Trade.objects.filter(pk=asset.pk).first()
 
     @staticmethod
     def _find_by_prefix(
