@@ -43,7 +43,7 @@ export class PaymentPlan {
       yAxis: {
         type: 'value',
         ...darkAxis(),
-        axisLabel: { formatter: (v: number) => `${(v / 1000).toLocaleString('de-DE')} Tsd.`, color: '#b9ccb2' },
+        axisLabel: { formatter: (v: number) => `${(v / 1000).toLocaleString('de-DE')} Tsd.`, color: '#b8b8b8' },
       },
       series: [
         {

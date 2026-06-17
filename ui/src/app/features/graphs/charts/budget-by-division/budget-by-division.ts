@@ -38,13 +38,13 @@ export class BudgetByDivision {
         type: 'category',
         data: rows.map((r) => sparteLabel(r.sparte)),
         ...darkAxis(),
-        axisLabel: { interval: 0, color: '#b9ccb2' },
+        axisLabel: { interval: 0, color: '#b8b8b8' },
         splitLine: { show: false },
       },
       yAxis: {
         type: 'value',
         ...darkAxis(),
-        axisLabel: { formatter: (v: number) => `${(v / 1000).toLocaleString('de-DE')} Tsd.`, color: '#b9ccb2' },
+        axisLabel: { formatter: (v: number) => `${(v / 1000).toLocaleString('de-DE')} Tsd.`, color: '#b8b8b8' },
       },
       series: [
         {

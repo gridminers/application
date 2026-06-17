@@ -9,21 +9,21 @@
    * Tonal surfaces — depth is communicated through luminance, not
    * shadows. Each step "rises" toward the user.
    * ---------------------------------------------------------------- */
-  --surface-base: #0c160a;             /* Level 0 — foundational canvas   */
-  --surface-container-lowest: #071106;
-  --surface-container-low: #141e12;    /* recessed / hover wells          */
-  --surface-container: #182216;        /* Level 1 — cards & containers     */
-  --surface-container-high: #222d20;   /* Level 2 — modals / popovers      */
-  --surface-container-highest: #2d382a;
-  --surface-bright: #313c2e;
+  --surface-base: #0d0d0d;             /* Level 0 — foundational canvas   */
+  --surface-container-lowest: #070707;
+  --surface-container-low: #161616;    /* recessed / hover wells          */
+  --surface-container: #1a1a1a;        /* Level 1 — cards & containers     */
+  --surface-container-high: #242424;   /* Level 2 — modals / popovers      */
+  --surface-container-highest: #2e2e2e;
+  --surface-bright: #333333;
 
   /* Text */
-  --on-surface: #dae6d2;               /* primary text                     */
-  --on-surface-variant: #b9ccb2;       /* muted / secondary text           */
+  --on-surface: #e2e2e2;               /* primary text                     */
+  --on-surface-variant: #b8b8b8;       /* muted / secondary text           */
 
   /* Lines */
-  --outline: #84967e;
-  --outline-variant: #3b4b37;          /* default border / separators      */
+  --outline: #8a8a8a;
+  --outline-variant: #3b3b3b;          /* default border / separators      */
 
   /* Accent (high-visibility green) */
   --primary: #00e639;
@@ -37,7 +37,7 @@
   --color-error: #ffb4ab;
   --color-warning: #e7bf99;
   --color-success: #00e639;
-  --color-info: #b9ccb2;
+  --color-info: #b8b8b8;
 
   /* ---------------------------------------------------------------- *
    * Compatibility aliases — existing component CSS references these.

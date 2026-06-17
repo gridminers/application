@@ -17,9 +17,9 @@ export const SPARTE_COLORS: Record<Sparte, string> = {
 export const CATEGORY_PALETTE: readonly string[] = [
   '#00e639',
   '#72ff70',
-  '#84967e',
-  '#b9ccb2',
-  '#3b4b37',
+  '#8a8a8a',
+  '#b8b8b8',
+  '#3b3b3b',
 ];
 
 /* ------------------------------------------------------------------ *
@@ -31,15 +31,15 @@ export const CATEGORY_PALETTE: readonly string[] = [
 /** Accent green used for primary single-series charts. */
 export const CHART_ACCENT = '#00e639';
 /** Primary text colour on the dark canvas. */
-export const CHART_TEXT = '#dae6d2';
+export const CHART_TEXT = '#e2e2e2';
 /** Muted text colour for axis labels. */
-export const CHART_TEXT_MUTED = '#b9ccb2';
+export const CHART_TEXT_MUTED = '#b8b8b8';
 /** Axis / border line colour. */
-export const CHART_AXIS_LINE = '#3b4b37';
+export const CHART_AXIS_LINE = '#3b3b3b';
 /** Subtle grid split lines. */
-export const CHART_SPLIT_LINE = 'rgba(132, 150, 126, 0.18)';
+export const CHART_SPLIT_LINE = 'rgba(138, 138, 138, 0.18)';
 /** Card surface colour — used to separate adjacent pie slices. */
-export const CHART_SURFACE = '#182216';
+export const CHART_SURFACE = '#1a1a1a';
 
 /** Monospaced font stack for data-heavy axis labels and legends. */
 export const CHART_FONT_MONO =
@@ -64,8 +64,8 @@ export function darkAxis(): Record<string, unknown> {
 /** Tooltip styling for the dark canvas. */
 export function darkTooltip(): Record<string, unknown> {
   return {
-    backgroundColor: '#222d20',
-    borderColor: '#3b4b37',
+    backgroundColor: '#242424',
+    borderColor: '#3b3b3b',
     textStyle: { color: CHART_TEXT, fontFamily: CHART_FONT_MONO },
   };
 }

@@ -38,7 +38,7 @@ export class PricePerMeter {
       xAxis: {
         type: 'value',
         ...darkAxis(),
-        axisLabel: { formatter: '{value} €/m', color: '#b9ccb2' },
+        axisLabel: { formatter: '{value} €/m', color: '#b8b8b8' },
       },
       yAxis: {
         type: 'category',
