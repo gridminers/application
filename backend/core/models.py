@@ -111,6 +111,11 @@ class Application(models.Model):
     """
 
     # -- Allgemeine Informationen --------------------------------------------
+    sha256 = models.CharField(
+        max_length=64,
+        unique=True,
+        verbose_name="SHA256-Prüfsumme",
+    )
     project_title = models.CharField(
         max_length=255,
         verbose_name="Projekttitel",
@@ -148,6 +153,8 @@ class Application(models.Model):
         on_delete=models.PROTECT,
         related_name="applications",
         verbose_name="Gewerk",
+        null=True,
+        blank=True,
     )
     psp_element = models.CharField(
         max_length=50,
@@ -157,6 +164,8 @@ class Application(models.Model):
         Street,
         on_delete=models.PROTECT,
         verbose_name="Straße",
+        null=True,
+        blank=True,
     )
 
     # -- Technische Kennzahlen -----------------------------------------------
@@ -170,8 +179,9 @@ class Application(models.Model):
     cost_per_meter = models.DecimalField(
         max_digits=12,
         decimal_places=2,
-        validators=[MinValueValidator(Decimal("0"))],
         verbose_name="Euro pro Meter Trassenlänge (€/m)",
+        null=True,
+        blank=True,
     )
 
     # -- Konfigurierbare Zuschlagssätze -------------------------------------

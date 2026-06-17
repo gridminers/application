@@ -15,19 +15,23 @@ from decimal import Decimal
 
 from django.db.models import Sum
 from rest_framework import generics, viewsets
-from rest_framework.decorators import action
+from rest_framework import status
+from rest_framework.request import Request
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from .filters import ApplicationFilter
+from .importer import ApplicationImporter, DuplicateDocumentError
 from .models import Application, Asset, Division, Street, Trade
+from .parsers import FieldParseError
 from .serializers import (
     ApplicationSerializer,
     AssetSerializer,
-    CostAggregationSerializer,
     DivisionSerializer,
     StreetSerializer,
     TradeSerializer,
 )
+from .serializers import ExportSerializer
 
 
 # ── Lookup ViewSets ────────────────────────────────────────────────────────────
@@ -71,7 +75,7 @@ class CostAggregationMixin:
 
     def aggregate(self, request, qs, *group_by):
         total = (
-            qs.aggregate(total=Sum(self.cost_field))["total"] or Decimal("0")
+                qs.aggregate(total=Sum(self.cost_field))["total"] or Decimal("0")
         )
         return {
             "count": qs.count(),
@@ -380,3 +384,23 @@ class ApplicationViewSet(viewsets.ReadOnlyModelViewSet):
     ).all()
     serializer_class = ApplicationSerializer
     filterset_class = ApplicationFilter
+
+
+class ApplicationImportView(APIView):
+    """Nimmt einen Parser-Export entgegen und legt eine ``Application`` an."""
+
+    importer_class = ApplicationImporter
+
+    def post(self, request: Request) -> Response:
+        serializer = ExportSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        importer = self.importer_class()
+        try:
+            importer.import_export(serializer.validated_data)
+        except DuplicateDocumentError:
+            return Response(status=status.HTTP_409_CONFLICT)
+        except (FieldParseError, KeyError) as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)

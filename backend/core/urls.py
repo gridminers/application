@@ -5,7 +5,6 @@ Streng basierend auf models(1).py (hand-edited, autoritativ).
 
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
-from rest_framework.urls import app_name
 
 from .views import (
     ApplicationViewSet,
@@ -32,7 +31,7 @@ from .views import (
     RealCostTradeYearView,
     RealCostYearView,
     StreetViewSet,
-    TradeViewSet,
+    TradeViewSet, ApplicationImportView,
 )
 
 app_name = "core"
@@ -45,9 +44,6 @@ router.register(r"trades", TradeViewSet, basename="trade")
 router.register(r"applications", ApplicationViewSet, basename="application")
 
 urlpatterns = [
-    # Router-URLs
-    path("", include(router.urls)),
-
     # ── Planned Costs ────────────────────────────────────────────────────────
     path(
         "planned_costs/",
@@ -151,4 +147,10 @@ urlpatterns = [
         RealCostTradeYearView.as_view(),
         name="real-costs-trade-year",
     ),
+    path(
+        "applications/import/",
+        ApplicationImportView.as_view(),
+        name="application-import",
+    ),
+    path("", include(router.urls)),
 ]
