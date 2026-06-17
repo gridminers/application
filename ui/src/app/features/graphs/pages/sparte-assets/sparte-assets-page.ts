@@ -1,13 +1,4 @@
-import {
-  afterNextRender,
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  ElementRef,
-  inject,
-  signal,
-  viewChild,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 
 import {
   aggregateBudgetByAsset,
@@ -20,6 +11,7 @@ import {
 } from '../../../../core/services/project-data';
 import { ChartCard } from '../../../../shared/chart-card/chart-card';
 import { sparteLabel } from '../../../../shared/chart-theme';
+import { GraphScroll } from '../../../../shared/graph-scroll/graph-scroll';
 import { BudgetByAsset } from '../../charts/budget-by-asset/budget-by-asset';
 import { BudgetByDivision } from '../../charts/budget-by-division/budget-by-division';
 import { CostComposition } from '../../charts/cost-composition/cost-composition';
@@ -34,6 +26,7 @@ import { createGraphFilterModel } from '../../filter-bar/graph-filter-model';
   selector: 'app-sparte-assets-page',
   imports: [
     GraphFilterBar,
+    GraphScroll,
     ChartCard,
     ExpendituresByYear,
     BudgetByDivision,
@@ -48,40 +41,6 @@ import { createGraphFilterModel } from '../../filter-bar/graph-filter-model';
 export class SparteAssetsPage {
   private readonly data = inject(ProjectData);
   protected readonly filter = createGraphFilterModel(this.data.projects);
-
-  private readonly body = viewChild<ElementRef<HTMLElement>>('body');
-  /** True while the chart grid can still be scrolled further down. */
-  protected readonly canScrollDown = signal(false);
-
-  constructor() {
-    afterNextRender(() => {
-      const el = this.body()?.nativeElement;
-      if (!el) {
-        return;
-      }
-      this.updateScrollState();
-      const observer = new ResizeObserver(() => this.updateScrollState());
-      observer.observe(el);
-    });
-  }
-
-  protected onScroll(): void {
-    this.updateScrollState();
-  }
-
-  protected scrollDown(): void {
-    const el = this.body()?.nativeElement;
-    el?.scrollBy({ top: el.clientHeight * 0.8, behavior: 'smooth' });
-  }
-
-  private updateScrollState(): void {
-    const el = this.body()?.nativeElement;
-    if (!el) {
-      return;
-    }
-    const remaining = el.scrollHeight - el.scrollTop - el.clientHeight;
-    this.canScrollDown.set(remaining > 8);
-  }
 
   protected readonly expendituresByYear = computed(() =>
     aggregateExpendituresByYear(this.filter.filtered()),

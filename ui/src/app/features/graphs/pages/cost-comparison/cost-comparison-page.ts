@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 
 import { aggregatePlanIstByYear, ProjectData } from '../../../../core/services/project-data';
 import { ChartCard } from '../../../../shared/chart-card/chart-card';
+import { GraphScroll } from '../../../../shared/graph-scroll/graph-scroll';
 import { PlanIstComparison } from '../../charts/plan-ist-comparison/plan-ist-comparison';
 import {
   PlanIstTotals,
@@ -13,7 +14,7 @@ import { createGraphFilterModel } from '../../filter-bar/graph-filter-model';
 /** Plan vs. actual cost comparison over the years. */
 @Component({
   selector: 'app-cost-comparison-page',
-  imports: [GraphFilterBar, ChartCard, PlanIstComparison, PlanIstTotals],
+  imports: [GraphFilterBar, GraphScroll, ChartCard, PlanIstComparison, PlanIstTotals],
   templateUrl: './cost-comparison-page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

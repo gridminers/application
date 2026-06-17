@@ -17,7 +17,7 @@
     (selectedAssetsChange)="filter.selectedAssets.set($event)"
   />
 
-  <div class="graph-page__body">
+  <app-graph-scroll>
     <app-chart-card
       class="graph-page__wide"
       title="Gesamtausgaben je Jahr"
@@ -41,5 +41,5 @@
     >
       <app-eigen-fremd-comparison [data]="eigenFremd()" />
     </app-chart-card>
-  </div>
+  </app-graph-scroll>
 </div>
