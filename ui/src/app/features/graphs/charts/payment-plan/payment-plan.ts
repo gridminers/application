@@ -3,7 +3,7 @@ import type { EChartsCoreOption } from 'echarts/core';
 
 import { PaymentByYear } from '../../../../core/services/project-data';
 import { Echart } from '../../../../shared/echart/echart';
-import { formatEuro } from '../../../../shared/chart-theme';
+import { formatEuro, chartTextStyle, darkAxis, darkTooltip, CHART_ACCENT } from '../../../../shared/chart-theme';
 
 /** Area chart: scheduled payments (Zahlungsplan) aggregated per year. */
 @Component({
@@ -26,19 +26,24 @@ export class PaymentPlan {
   readonly options = computed<EChartsCoreOption>(() => {
     const rows = this.data();
     return {
+      textStyle: chartTextStyle,
       grid: { left: 8, right: 24, top: 16, bottom: 8, containLabel: true },
       tooltip: {
         trigger: 'axis',
         valueFormatter: (v: unknown) => formatEuro(Number(v)),
+        ...darkTooltip(),
       },
       xAxis: {
         type: 'category',
         boundaryGap: false,
         data: rows.map((r) => String(r.year)),
+        ...darkAxis(),
+        splitLine: { show: false },
       },
       yAxis: {
         type: 'value',
-        axisLabel: { formatter: (v: number) => `${(v / 1000).toLocaleString('de-DE')} Tsd.` },
+        ...darkAxis(),
+        axisLabel: { formatter: (v: number) => `${(v / 1000).toLocaleString('de-DE')} Tsd.`, color: '#b9ccb2' },
       },
       series: [
         {
@@ -46,8 +51,8 @@ export class PaymentPlan {
           smooth: true,
           symbolSize: 8,
           data: rows.map((r) => r.amount),
-          lineStyle: { width: 3, color: '#1c5fd6' },
-          itemStyle: { color: '#1c5fd6' },
+          lineStyle: { width: 3, color: CHART_ACCENT },
+          itemStyle: { color: CHART_ACCENT },
           areaStyle: {
             color: {
               type: 'linear',
@@ -56,8 +61,8 @@ export class PaymentPlan {
               x2: 0,
               y2: 1,
               colorStops: [
-                { offset: 0, color: 'rgba(28, 95, 214, 0.35)' },
-                { offset: 1, color: 'rgba(28, 95, 214, 0.02)' },
+                { offset: 0, color: 'rgba(0, 230, 57, 0.35)' },
+                { offset: 1, color: 'rgba(0, 230, 57, 0.02)' },
               ],
             },
           },

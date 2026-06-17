@@ -4,9 +4,11 @@
   top: -64px;
   z-index: 100;
   padding: var(--space-2) var(--space-4);
-  background: var(--color-primary);
-  color: var(--color-text-invert);
-  border-radius: var(--radius-sm);
+  background: var(--primary);
+  color: var(--on-primary);
+  border-radius: var(--radius);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
   transition: top 0.15s ease;
 }
 
@@ -18,9 +20,8 @@
   position: sticky;
   top: 0;
   z-index: 50;
-  background: var(--color-surface);
-  border-bottom: 1px solid var(--color-border);
-  box-shadow: var(--shadow-sm);
+  background: var(--surface-container-low);
+  border-bottom: 1px solid var(--outline-variant);
 }
 
 .header__inner {
@@ -40,38 +41,49 @@
 .brand__mark {
   font-size: 1.5rem;
   line-height: 1;
-  color: var(--color-primary);
+  color: var(--primary);
 }
 
 .brand__name {
+  font-family: var(--font-display);
   font-weight: 700;
   font-size: 1.15rem;
-  color: var(--color-text);
+  letter-spacing: -0.01em;
+  color: var(--on-surface);
 }
 
 .brand__city {
-  font-size: 0.8rem;
-  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--on-surface-variant);
 }
 
 .nav {
   display: flex;
-  gap: var(--space-2);
+  gap: var(--space-1);
 }
 
 .nav__link {
   padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-sm);
-  font-weight: 500;
-  color: var(--color-text-muted);
+  border-radius: var(--radius);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--on-surface-variant);
+  border: 1px solid transparent;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 
 .nav__link:hover {
-  background: var(--color-surface-muted);
-  color: var(--color-text);
+  background: var(--surface-container-high);
+  color: var(--on-surface);
 }
 
 .nav__link--active {
-  color: var(--color-primary);
-  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  color: var(--primary);
+  background: var(--surface-container);
+  border-color: var(--outline-variant);
 }

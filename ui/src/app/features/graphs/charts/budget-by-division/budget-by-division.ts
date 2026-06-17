@@ -3,7 +3,7 @@ import type { EChartsCoreOption } from 'echarts/core';
 
 import { BudgetBySparte } from '../../../../core/services/project-data';
 import { Echart } from '../../../../shared/echart/echart';
-import { formatEuro, sparteLabel, SPARTE_COLORS } from '../../../../shared/chart-theme';
+import { formatEuro, sparteLabel, SPARTE_COLORS, chartTextStyle, darkAxis, darkTooltip } from '../../../../shared/chart-theme';
 
 /** Bar chart: total budget (Gesamtkosten) per division. */
 @Component({
@@ -26,20 +26,25 @@ export class BudgetByDivision {
   readonly options = computed<EChartsCoreOption>(() => {
     const rows = this.data();
     return {
+      textStyle: chartTextStyle,
       grid: { left: 8, right: 24, top: 16, bottom: 8, containLabel: true },
       tooltip: {
         trigger: 'axis',
         axisPointer: { type: 'shadow' },
         valueFormatter: (v: unknown) => formatEuro(Number(v)),
+        ...darkTooltip(),
       },
       xAxis: {
         type: 'category',
         data: rows.map((r) => sparteLabel(r.sparte)),
-        axisLabel: { interval: 0 },
+        ...darkAxis(),
+        axisLabel: { interval: 0, color: '#b9ccb2' },
+        splitLine: { show: false },
       },
       yAxis: {
         type: 'value',
-        axisLabel: { formatter: (v: number) => `${(v / 1000).toLocaleString('de-DE')} Tsd.` },
+        ...darkAxis(),
+        axisLabel: { formatter: (v: number) => `${(v / 1000).toLocaleString('de-DE')} Tsd.`, color: '#b9ccb2' },
       },
       series: [
         {

@@ -3,7 +3,7 @@ import type { EChartsCoreOption } from 'echarts/core';
 
 import { PricePerMeter as PricePerMeterData } from '../../../../core/services/project-data';
 import { Echart } from '../../../../shared/echart/echart';
-import { sparteLabel, SPARTE_COLORS } from '../../../../shared/chart-theme';
+import { sparteLabel, SPARTE_COLORS, chartTextStyle, darkAxis, darkTooltip } from '../../../../shared/chart-theme';
 
 /** Horizontal bar chart: price per metre (Preis pro Meter) per project. */
 @Component({
@@ -27,19 +27,24 @@ export class PricePerMeter {
     // Ascending so the largest bar sits at the top of a horizontal axis.
     const rows = [...this.data()].sort((a, b) => a.preisProMeter - b.preisProMeter);
     return {
+      textStyle: chartTextStyle,
       grid: { left: 8, right: 32, top: 8, bottom: 8, containLabel: true },
       tooltip: {
         trigger: 'axis',
         axisPointer: { type: 'shadow' },
         valueFormatter: (v: unknown) => `${v} €/m`,
+        ...darkTooltip(),
       },
       xAxis: {
         type: 'value',
-        axisLabel: { formatter: '{value} €/m' },
+        ...darkAxis(),
+        axisLabel: { formatter: '{value} €/m', color: '#b9ccb2' },
       },
       yAxis: {
         type: 'category',
         data: rows.map((r) => sparteLabel(r.sparte)),
+        ...darkAxis(),
+        splitLine: { show: false },
       },
       series: [
         {

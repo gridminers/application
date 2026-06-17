@@ -1,51 +1,99 @@
 /* ------------------------------------------------------------------ *
  * Gridminers UI — global styles & design tokens
+ * Design system: "Neutral Monochrome Technical System" (see docs/DESIGN.md)
+ * A true-neutral, tonal dark theme with a high-visibility green accent.
  * ------------------------------------------------------------------ */
 
 :root {
-  /* Brand / utility-division palette (WCAG-AA contrast on white) */
-  --color-bg: #0b1020;
-  --color-surface: #ffffff;
-  --color-surface-muted: #f4f6fb;
-  --color-border: #d8deea;
+  /* ---------------------------------------------------------------- *
+   * Tonal surfaces — depth is communicated through luminance, not
+   * shadows. Each step "rises" toward the user.
+   * ---------------------------------------------------------------- */
+  --surface-base: #0c160a;             /* Level 0 — foundational canvas   */
+  --surface-container-lowest: #071106;
+  --surface-container-low: #141e12;    /* recessed / hover wells          */
+  --surface-container: #182216;        /* Level 1 — cards & containers     */
+  --surface-container-high: #222d20;   /* Level 2 — modals / popovers      */
+  --surface-container-highest: #2d382a;
+  --surface-bright: #313c2e;
 
-  --color-text: #1a2233;
-  --color-text-muted: #586079;
-  --color-text-invert: #f7f9ff;
+  /* Text */
+  --on-surface: #dae6d2;               /* primary text                     */
+  --on-surface-variant: #b9ccb2;       /* muted / secondary text           */
 
-  --color-primary: #1c5fd6;
-  --color-primary-dark: #1648a3;
-  --color-accent: #0e9f6e;
+  /* Lines */
+  --outline: #84967e;
+  --outline-variant: #3b4b37;          /* default border / separators      */
+
+  /* Accent (high-visibility green) */
+  --primary: #00e639;
+  --primary-bright: #00ff41;
+  --primary-hover: #72ff70;
+  --on-primary: #003907;               /* dark text on the green accent    */
+  --primary-container: #00531e;
+  --on-primary-container: #72ff70;
+
+  /* Departmental / functional colours (used sparingly) */
+  --color-error: #ffb4ab;
+  --color-warning: #e7bf99;
+  --color-success: #00e639;
+  --color-info: #b9ccb2;
+
+  /* ---------------------------------------------------------------- *
+   * Compatibility aliases — existing component CSS references these.
+   * They now resolve to the dark design-system tokens above.
+   * ---------------------------------------------------------------- */
+  --color-bg: var(--surface-base);
+  --color-surface: var(--surface-container);
+  --color-surface-muted: var(--surface-container-high);
+  --color-border: var(--outline-variant);
+
+  --color-text: var(--on-surface);
+  --color-text-muted: var(--on-surface-variant);
+  --color-text-invert: var(--on-primary);
+
+  --color-primary: var(--primary);
+  --color-primary-dark: var(--primary-bright);
+  --color-accent: var(--primary);
 
   /* Sparten (utility divisions) — used for chart series */
-  --sparte-strom: #e8a700;      /* electricity */
-  --sparte-gas: #d6531c;        /* gas */
-  --sparte-wasser: #1c7fd6;     /* water */
-  --sparte-infotechnik: #7a4fd0;/* info technology */
-  --sparte-fernwaerme: #c0392b; /* district heating */
+  --sparte-strom: #e8a700;       /* electricity     */
+  --sparte-gas: #d6531c;         /* gas             */
+  --sparte-wasser: #1c7fd6;      /* water           */
+  --sparte-infotechnik: #7a4fd0; /* info technology */
+  --sparte-fernwaerme: #c0392b;  /* district heating*/
 
-  /* Spacing scale */
-  --space-1: 0.25rem;
-  --space-2: 0.5rem;
-  --space-3: 0.75rem;
-  --space-4: 1rem;
-  --space-6: 1.5rem;
-  --space-8: 2rem;
+  /* Spacing scale — 4px baseline rhythm */
+  --space-1: 0.25rem; /* 4px  */
+  --space-2: 0.5rem;  /* 8px  */
+  --space-3: 0.75rem; /* 12px */
+  --space-4: 1rem;    /* 16px */
+  --space-5: 1.5rem;  /* 24px */
+  --space-6: 1.5rem;  /* 24px */
+  --space-8: 2.5rem;  /* 40px */
   --space-12: 3rem;
   --space-16: 4rem;
 
-  /* Radii & elevation */
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 16px;
-  --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.06);
-  --shadow-md: 0 4px 16px rgba(16, 24, 40, 0.08);
+  /* Radii — soft 4px base; cards may go to 8px */
+  --radius-sm: 0.125rem; /* 2px */
+  --radius: 0.25rem;     /* 4px — buttons & inputs */
+  --radius-md: 0.25rem;  /* 4px */
+  --radius-lg: 0.5rem;   /* 8px — cards & modals   */
 
-  --max-content-width: 1200px;
+  /* Depth is tonal; shadows stay subtle and serve only edge definition. */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.5);
+
+  --max-content-width: 1440px;
   --header-height: 64px;
 
-  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+  /* Typography */
+  --font-display: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  --font-sans: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
     Helvetica, Arial, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas,
+    monospace;
 }
 
 /* ------------------------------------------------------------------ *
@@ -66,17 +114,25 @@ body {
 
 body {
   font-family: var(--font-sans);
+  font-size: 16px;
   color: var(--color-text);
-  background: var(--color-surface-muted);
+  background: var(--surface-base);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
 h1,
 h2,
 h3,
-h4,
+h4 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
 p {
   margin: 0;
 }
@@ -90,6 +146,16 @@ img,
 svg {
   display: block;
   max-width: 100%;
+}
+
+/* Monospaced labels / metadata — the "tool-first" voice. */
+.label-caps {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
 /* Accessibility helpers */
@@ -106,14 +172,20 @@ svg {
 }
 
 :focus-visible {
-  outline: 3px solid var(--color-primary);
+  outline: 2px solid var(--primary-bright);
   outline-offset: 2px;
 }
 
-/* Shared layout helper */
+/* Shared layout helper — fixed centred container, generous outer margins. */
 .container {
   width: 100%;
   max-width: var(--max-content-width);
   margin-inline: auto;
-  padding-inline: var(--space-6);
+  padding-inline: var(--space-8);
+}
+
+@media (max-width: 640px) {
+  .container {
+    padding-inline: var(--space-4);
+  }
 }
