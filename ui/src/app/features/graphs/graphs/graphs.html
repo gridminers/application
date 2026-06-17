@@ -17,9 +17,9 @@
 
     <app-chart-card
       title="Kostenarten gesamt"
-      description="Aufteilung in Material-, Fremd-, Eigenleistungen, Ingenieurleistung Dritter und Zuschläge."
+      description="Aufteilung in Material-, Fremd-, Eigenleistungen, Ingenieurleistung Dritter und Zuschläge. Optional nach Assetklasse filterbar."
     >
-      <app-cost-composition [data]="costComposition()" />
+      <app-cost-composition [data]="costCompositionByAsset()" />
     </app-chart-card>
 
     <app-chart-card

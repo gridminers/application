@@ -1,0 +1,33 @@
+<div class="cost-composition">
+  <fieldset class="cost-composition__filter">
+    <legend class="cost-composition__legend">Assetklassen</legend>
+    <div class="cost-composition__chips">
+      <button
+        type="button"
+        class="cost-composition__chip"
+        [class.is-active]="!hasSelection()"
+        [attr.aria-pressed]="!hasSelection()"
+        (click)="reset()"
+      >
+        Alle
+      </button>
+      @for (asset of assets(); track asset) {
+        <label class="cost-composition__chip" [class.is-active]="isSelected(asset)">
+          <input
+            type="checkbox"
+            class="visually-hidden"
+            [checked]="isSelected(asset)"
+            (change)="toggle(asset)"
+          />
+          <span>{{ asset }}</span>
+        </label>
+      }
+    </div>
+  </fieldset>
+
+  <app-echart
+    class="cost-composition__chart"
+    [options]="options()"
+    [ariaLabel]="ariaLabel()"
+  />
+</div>

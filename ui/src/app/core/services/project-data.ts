@@ -20,6 +20,46 @@ export interface CostComposition {
   zuschlaege: number;
 }
 
+/** Cost composition aggregated for a single asset class. */
+export interface CostCompositionByAsset {
+  /** Asset class (e.g. "20 kV-Netz", "0,4 kV-Netz"). */
+  asset: string;
+  composition: CostComposition;
+}
+
+/** Cost composition of a single project (maps the breakdown to chart slices). */
+function projectComposition(p: Project): CostComposition {
+  return {
+    materialkosten: p.kosten.materialkosten,
+    fremdleistungen: p.kosten.fremdleistungen,
+    eigenleistungen: p.kosten.eigenleistungen,
+    ingenieurleistungDritte: p.kosten.ingenieurleistungDritte,
+    zuschlaege: p.kosten.zwischensummeZuschlaege,
+  };
+}
+
+/** Sum a list of cost compositions into a single total. */
+export function sumCostCompositions(
+  items: readonly CostComposition[],
+): CostComposition {
+  return items.reduce<CostComposition>(
+    (acc, c) => ({
+      materialkosten: acc.materialkosten + c.materialkosten,
+      fremdleistungen: acc.fremdleistungen + c.fremdleistungen,
+      eigenleistungen: acc.eigenleistungen + c.eigenleistungen,
+      ingenieurleistungDritte: acc.ingenieurleistungDritte + c.ingenieurleistungDritte,
+      zuschlaege: acc.zuschlaege + c.zuschlaege,
+    }),
+    {
+      materialkosten: 0,
+      fremdleistungen: 0,
+      eigenleistungen: 0,
+      ingenieurleistungDritte: 0,
+      zuschlaege: 0,
+    },
+  );
+}
+
 /** Total scheduled payment for a given year. */
 export interface PaymentByYear {
   year: number;
@@ -73,24 +113,29 @@ export class ProjectData {
 
   /** Cost composition summed across all projects. */
   readonly costComposition = computed<CostComposition>(() =>
-    this.projects().reduce<CostComposition>(
-      (acc, p) => ({
-        materialkosten: acc.materialkosten + p.kosten.materialkosten,
-        fremdleistungen: acc.fremdleistungen + p.kosten.fremdleistungen,
-        eigenleistungen: acc.eigenleistungen + p.kosten.eigenleistungen,
-        ingenieurleistungDritte:
-          acc.ingenieurleistungDritte + p.kosten.ingenieurleistungDritte,
-        zuschlaege: acc.zuschlaege + p.kosten.zwischensummeZuschlaege,
-      }),
-      {
-        materialkosten: 0,
-        fremdleistungen: 0,
-        eigenleistungen: 0,
-        ingenieurleistungDritte: 0,
-        zuschlaege: 0,
-      },
+    sumCostCompositions(this.projects().map(projectComposition)),
+  );
+
+  /** Distinct asset classes present in the data, in display order. */
+  readonly assets = computed<string[]>(() =>
+    [...new Set(this.projects().map((p) => p.asset))].sort((a, b) =>
+      a.localeCompare(b, 'de'),
     ),
   );
+
+  /** Cost composition aggregated per asset class (ordered like {@link assets}). */
+  readonly costCompositionByAsset = computed<CostCompositionByAsset[]>(() => {
+    const groups = new Map<string, CostComposition[]>();
+    for (const p of this.projects()) {
+      const list = groups.get(p.asset) ?? [];
+      list.push(projectComposition(p));
+      groups.set(p.asset, list);
+    }
+    return this.assets().map((asset) => ({
+      asset,
+      composition: sumCostCompositions(groups.get(asset) ?? []),
+    }));
+  });
 
   /** Scheduled payments summed per year (sorted ascending). */
   readonly paymentsByYear = computed<PaymentByYear[]>(() => {

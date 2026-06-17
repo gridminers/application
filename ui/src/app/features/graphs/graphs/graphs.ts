@@ -25,7 +25,7 @@ export class Graphs {
   private readonly data = inject(ProjectData);
 
   readonly budgetBySparte = this.data.budgetBySparte;
-  readonly costComposition = this.data.costComposition;
+  readonly costCompositionByAsset = this.data.costCompositionByAsset;
   readonly paymentsByYear = this.data.paymentsByYear;
   readonly pricePerMeter = this.data.pricePerMeter;
   readonly eigenFremdByYear = this.data.eigenFremdByYear;
