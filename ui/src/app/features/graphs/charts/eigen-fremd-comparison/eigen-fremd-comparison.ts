@@ -5,6 +5,7 @@ import { EigenFremdByYear } from '../../../../core/services/project-data';
 import { Echart } from '../../../../shared/echart/echart';
 import {
   formatEuro,
+  formatAxisEuro,
   chartTextStyle,
   darkAxis,
   darkTooltip,
@@ -22,9 +23,9 @@ const EIGEN_BAR = 'rgba(0, 230, 57, 0.4)';
 /** Diff-bar fill when Fremdleistungen are higher. */
 const FREMD_BAR = 'rgba(232, 167, 0, 0.4)';
 
-/** Format euros as thousands ("123 Tsd.") for axis labels. */
+/** Compact euro label for axis ticks, scaling Tsd./Mio. to the magnitude. */
 function thousands(v: number): string {
-  return `${(v / 1000).toLocaleString('de-DE')} Tsd.`;
+  return formatAxisEuro(v);
 }
 
 /**

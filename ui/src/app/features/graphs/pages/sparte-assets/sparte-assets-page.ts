@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 
 import {
+  aggregateBudgetByAsset,
   aggregateBudgetBySparte,
   aggregateCostComposition,
   aggregatePricePerMeterByYear,
@@ -8,6 +9,7 @@ import {
 } from '../../../../core/services/project-data';
 import { ChartCard } from '../../../../shared/chart-card/chart-card';
 import { sparteLabel } from '../../../../shared/chart-theme';
+import { BudgetByAsset } from '../../charts/budget-by-asset/budget-by-asset';
 import { BudgetByDivision } from '../../charts/budget-by-division/budget-by-division';
 import { CostComposition } from '../../charts/cost-composition/cost-composition';
 import { PricePerMeter } from '../../charts/price-per-meter/price-per-meter';
@@ -21,6 +23,7 @@ import { createGraphFilterModel } from '../../filter-bar/graph-filter-model';
     GraphFilterBar,
     ChartCard,
     BudgetByDivision,
+    BudgetByAsset,
     CostComposition,
     PricePerMeter,
   ],
@@ -33,6 +36,9 @@ export class SparteAssetsPage {
 
   protected readonly budgetBySparte = computed(() =>
     aggregateBudgetBySparte(this.filter.filtered()),
+  );
+  protected readonly budgetByAsset = computed(() =>
+    aggregateBudgetByAsset(this.filter.filtered()),
   );
   protected readonly composition = computed(() =>
     aggregateCostComposition(this.filter.filtered()),

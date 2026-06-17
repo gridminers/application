@@ -11,6 +11,13 @@ export interface BudgetBySparte {
   gesamtkosten: number;
 }
 
+/** Total budget per asset class (with its division, for colouring). */
+export interface BudgetByAsset {
+  asset: string;
+  sparte: Sparte;
+  gesamtkosten: number;
+}
+
 /** Aggregated cost-composition totals across all projects. */
 export interface CostComposition {
   materialkosten: number;
@@ -132,6 +139,28 @@ export function aggregateBudgetBySparte(
     totals.set(p.sparte, (totals.get(p.sparte) ?? 0) + p.kosten.gesamtkosten);
   }
   return SPARTEN.map((sparte) => ({ sparte, gesamtkosten: totals.get(sparte) ?? 0 }));
+}
+
+/**
+ * Total budget grouped by asset class, largest first. Each asset keeps the
+ * division of the first project that uses it (assets are division-specific) so
+ * the chart can colour bars by their Sparte.
+ */
+export function aggregateBudgetByAsset(
+  projects: readonly Project[],
+): BudgetByAsset[] {
+  const totals = new Map<string, { sparte: Sparte; gesamtkosten: number }>();
+  for (const p of projects) {
+    const cur = totals.get(p.asset);
+    if (cur) {
+      cur.gesamtkosten += p.kosten.gesamtkosten;
+    } else {
+      totals.set(p.asset, { sparte: p.sparte, gesamtkosten: p.kosten.gesamtkosten });
+    }
+  }
+  return [...totals.entries()]
+    .map(([asset, v]) => ({ asset, sparte: v.sparte, gesamtkosten: v.gesamtkosten }))
+    .sort((a, b) => b.gesamtkosten - a.gesamtkosten);
 }
 
 /** Cost composition summed across the given projects. */

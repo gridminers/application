@@ -4,6 +4,7 @@ import type { EChartsCoreOption } from 'echarts/core';
 import { Echart } from '../../../../shared/echart/echart';
 import {
   formatEuro,
+  formatAxisEuro,
   chartTextStyle,
   darkAxis,
   darkTooltip,
@@ -19,9 +20,9 @@ export interface PlanIstTotalsData {
 const PLAN_COLOR = CHART_ACCENT;
 const IST_COLOR = '#e8a700';
 
-/** Format euros as thousands ("123 Tsd.") for axis labels. */
+/** Compact euro label for axis ticks, scaling Tsd./Mio. to the magnitude. */
 function thousands(v: number): string {
-  return `${(v / 1000).toLocaleString('de-DE')} Tsd.`;
+  return formatAxisEuro(v);
 }
 
 /** Bar chart: total planned vs. total actual costs side by side. */

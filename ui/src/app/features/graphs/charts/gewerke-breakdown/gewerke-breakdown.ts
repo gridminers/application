@@ -5,6 +5,7 @@ import { GewerkeAggregate } from '../../../../core/services/project-data';
 import { Echart } from '../../../../shared/echart/echart';
 import {
   formatEuro,
+  formatAxisEuro,
   chartTextStyle,
   darkAxis,
   darkTooltip,
@@ -21,9 +22,9 @@ const SERIES: readonly { name: string; pick: (g: GewerkeAggregate) => number }[]
   { name: 'Zuschläge', pick: (g) => g.composition.zuschlaege },
 ];
 
-/** Format euros as thousands ("123 Tsd.") for axis labels. */
+/** Compact euro label for axis ticks, scaling Tsd./Mio. to the magnitude. */
 function thousands(v: number): string {
-  return `${(v / 1000).toLocaleString('de-DE')} Tsd.`;
+  return formatAxisEuro(v);
 }
 
 /** Stacked bar chart: cost composition broken down per trade (Gewerk). */

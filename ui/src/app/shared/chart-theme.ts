@@ -79,6 +79,22 @@ export function formatEuro(value: number): string {
   }).format(value);
 }
 
+/**
+ * Compact euro label for axis ticks. Scales the unit to the magnitude so the
+ * German thousands separator can't be mistaken for a decimal point
+ * (e.g. 1_500_000 → "1,5 Mio." instead of an ambiguous "1.500 Tsd.").
+ */
+export function formatAxisEuro(value: number): string {
+  const abs = Math.abs(value);
+  if (abs >= 1_000_000) {
+    return `${(value / 1_000_000).toLocaleString('de-DE', { maximumFractionDigits: 1 })} Mio.`;
+  }
+  if (abs >= 1_000) {
+    return `${(value / 1_000).toLocaleString('de-DE', { maximumFractionDigits: 0 })} Tsd.`;
+  }
+  return value.toLocaleString('de-DE');
+}
+
 /** Display label for a division. */
 export function sparteLabel(sparte: Sparte): string {
   return SPARTE_LABELS[sparte];

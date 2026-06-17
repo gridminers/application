@@ -29,6 +29,13 @@
     </app-chart-card>
 
     <app-chart-card
+      title="Gesamtkosten je Asset"
+      description="Summe der Gesamtkosten aller Projekte, gruppiert nach Assetklasse."
+    >
+      <app-budget-by-asset [data]="budgetByAsset()" />
+    </app-chart-card>
+
+    <app-chart-card
       title="Kostenarten gesamt"
       description="Aufteilung in Material-, Fremd-, Eigenleistungen, Ingenieurleistung Dritter und Zuschläge."
     >

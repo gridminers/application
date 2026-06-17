@@ -3,7 +3,7 @@ import type { EChartsCoreOption } from 'echarts/core';
 
 import { BudgetBySparte } from '../../../../core/services/project-data';
 import { Echart } from '../../../../shared/echart/echart';
-import { formatEuro, sparteLabel, SPARTE_COLORS, chartTextStyle, darkAxis, darkTooltip } from '../../../../shared/chart-theme';
+import { formatEuro, formatAxisEuro, sparteLabel, SPARTE_COLORS, chartTextStyle, darkAxis, darkTooltip } from '../../../../shared/chart-theme';
 
 /** Bar chart: total budget (Gesamtkosten) per division. */
 @Component({
@@ -44,7 +44,7 @@ export class BudgetByDivision {
       yAxis: {
         type: 'value',
         ...darkAxis(),
-        axisLabel: { formatter: (v: number) => `${(v / 1000).toLocaleString('de-DE')} Tsd.`, color: '#b8b8b8' },
+        axisLabel: { formatter: (v: number) => formatAxisEuro(v), color: '#b8b8b8' },
       },
       series: [
         {
