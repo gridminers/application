@@ -48,7 +48,7 @@ _TARGET = (
     "plan; if only partial yearly payments are visible, return the visible "
     "years and amounts. Do not calculate or invent missing values. Add a "
     "warning only when a relevant cost/project value appears present but is "
-    "unreadable or ambiguous."
+    "unreadable or ambiguous. Sparte is the bold category of either Stom, Infortechnik, Wasser, Gas, and sometimes Fernwärme. You choose the one where one of the checkmarks is checked. Asset is the field inside of the Sparte-categories that has the checkmark. Its always first the checkbox followed by the label on the right."
 )
 
 _LAYOUT = (
