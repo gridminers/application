@@ -324,23 +324,42 @@ Die Datei `backend/settings/docker.py` erbt von `dev.py` und setzt `ALLOWED_HOST
 
 **Neue Settings-Dateien** für andere Umgebungen (z. B. `staging.py`) genauso anlegen: von `common.py` oder `dev.py` erben und nur die Delta-Werte überschreiben.
 
+### Umgebungsvariablen
+
+Alle Secrets und Konfigurationswerte werden über eine `.env`-Datei übergeben (liegt in `application/`, eine Ebene über `backend/`). Die Datei wird **nicht versioniert** – nur `.env.example` liegt im Repository.
+
+Benötigte Variablen:
+
+| Variable              | Beschreibung                            |
+|-----------------------|-----------------------------------------|
+| `SECRET_KEY`          | Django Secret Key                       |
+| `DJANGO_SETTINGS_MODULE` | z. B. `backend.settings.prod`        |
+| `POSTGRES_DB`         | Datenbankname                           |
+| `POSTGRES_USER`       | Datenbankbenutzer                       |
+| `POSTGRES_PASSWORD`   | Datenbankpasswort                       |
+| `POSTGRES_HOST`       | Hostname des DB-Containers (`db`)       |
+| `POSTGRES_PORT`       | Port (Standard: `5432`)                 |
+
 ### Container starten
 
 ```bash
-# Vom Repository-Root aus
+# Vom application/-Verzeichnis aus
+cp .env.example .env   # einmalig, dann Werte anpassen
 docker compose up --build
 ```
 
 Backend läuft auf Port **8000**, Migrationen werden automatisch beim Start ausgeführt.
+Der Backend-Container startet erst, wenn der PostgreSQL-Healthcheck erfolgreich ist.
 
 ### Wichtige Unterschiede Dev vs. Docker
 
-| Aspekt           | Dev (lokal)                  | Docker                         |
-|------------------|------------------------------|--------------------------------|
-| Settings         | `backend.settings.dev`       | `backend.settings.docker`      |
-| ALLOWED_HOSTS    | `[]`                         | `["*"]`                        |
-| Datenbank        | SQLite in `backend/db.sqlite3` | SQLite (Volume-gemountet)    |
-| Server           | `manage.py runserver`        | `manage.py runserver 0.0.0.0:8000` |
+| Aspekt           | Dev (lokal)                        | Docker                              |
+|------------------|------------------------------------|-------------------------------------|
+| Settings         | `backend.settings.dev`             | `backend.settings.prod`             |
+| ALLOWED_HOSTS    | `[]`                               | `["*"]`                             |
+| Datenbank        | SQLite in `backend/db.sqlite3`     | PostgreSQL 16 (Service `db`)        |
+| DB-Konfiguration | hartcodiert in `dev.py`            | via `.env`-Datei                    |
+| Server           | `manage.py runserver`              | `manage.py runserver 0.0.0.0:8000`  |
 
 ---
 

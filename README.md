@@ -16,6 +16,15 @@ application/
 
 Voraussetzungen: Docker & Docker Compose
 
+**1. Umgebungsvariablen vorbereiten:**
+
+```bash
+cp .env.example .env
+# .env öffnen und Werte anpassen (SECRET_KEY, Passwörter etc.)
+```
+
+**2. Services starten:**
+
 ```bash
 # Alle Services bauen und starten
 docker compose up --build
@@ -24,12 +33,16 @@ docker compose up --build
 docker compose up --build -d
 ```
 
-| Service  | URL                    | Beschreibung              |
-|----------|------------------------|---------------------------|
-| Backend  | http://localhost:8000  | Django REST API           |
-| UI       | http://localhost:4200  | Angular Frontend (nginx)  |
+| Service    | URL                    | Beschreibung                        |
+|------------|------------------------|-------------------------------------|
+| Backend    | http://localhost:8000  | Django REST API                     |
+| UI         | http://localhost:4200  | Angular Frontend (nginx)            |
+| PostgreSQL | Port 5432 (intern)     | Nur innerhalb des Docker-Netzwerks  |
 
-Die SQLite-Datenbank wird unter `backend/db.sqlite3` persistiert.
+Die PostgreSQL-Daten werden im Docker-Volume `postgres_data` persistiert.
+Das Backend wartet automatisch, bis die Datenbank bereit ist (Healthcheck), bevor Migrationen ausgeführt werden.
+
+> **Hinweis:** Die `.env`-Datei enthält Secrets und darf nicht ins Repository committed werden. Nur `.env.example` wird versioniert.
 
 ## Lokale Entwicklung (ohne Docker)
 
@@ -70,6 +83,6 @@ Vollständige API-Dokumentation: [`backend/README.md`](backend/README.md)
 | Komponente | Technologie                    |
 |------------|-------------------------------|
 | Backend    | Python 3.12, Django 5.2, DRF  |
-| Datenbank  | SQLite (Dev) / PostgreSQL (Prod) |
+| Datenbank  | PostgreSQL 16 (Docker) / SQLite (lokal Dev) |
 | Frontend   | Angular 22, TypeScript        |
 | Container  | Docker, nginx                 |
