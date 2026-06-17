@@ -5,12 +5,13 @@ import {
   ElementRef,
   inject,
   OnDestroy,
+  signal,
   viewChild,
 } from '@angular/core';
 import * as L from 'leaflet';
 
 import { Sparte, SPARTE_LABELS, SPARTEN } from '../../../../core/models/sparte';
-import { ProjectData } from '../../../../core/services/project-data';
+import { aggregateStreetSparten, ProjectData } from '../../../../core/services/project-data';
 import { StreetGeocoder } from '../../../../core/services/street-geocoder';
 
 /** Geographic center of Braunschweig. */
@@ -68,9 +69,17 @@ export class MapPage implements AfterViewInit, OnDestroy {
   private readonly mapContainer =
     viewChild.required<ElementRef<HTMLElement>>('mapContainer');
 
+  /** Distinct fiscal years present in the data, ascending. */
+  protected readonly years = this.data.years;
+
+  /** Selected fiscal year, or `null` for all years (the default). */
+  protected readonly selectedYear = signal<number | null>(null);
+
   private map?: L.Map;
   private streetLayer?: L.FeatureGroup;
   private readonly streets: LocatedStreet[] = [];
+  /** Geocoded geometry per street name, cached so year changes don't refetch. */
+  private readonly geometryByStreet = new Map<string, L.LatLng[][]>();
   private readonly redraw = () => this.render();
 
   ngAfterViewInit(): void {
@@ -112,18 +121,24 @@ export class MapPage implements AfterViewInit, OnDestroy {
     this.streets.length = 0;
   }
 
+  /** Apply the chosen year filter (empty value = all years) and redraw. */
+  protected onYearChange(value: string): void {
+    this.selectedYear.set(value ? Number(value) : null);
+    this.rebuildStreets();
+  }
+
   /**
-   * Locate every managed street within Braunschweig and mark it with one line
-   * per division (Sparte) that has work on it, coloured via {@link STREET_COLORS}.
+   * Locate every managed street within Braunschweig and cache its geometry.
    * Streets with no confident match are skipped. Lookups run sequentially to
-   * stay within the geocoder's fair-use rate limit.
+   * stay within the geocoder's fair-use rate limit. After each lookup the
+   * drawn streets are rebuilt for the current year filter.
    */
   private async highlightManagedStreets(): Promise<void> {
     if (!this.map) {
       return;
     }
 
-    for (const { name, sparten } of this.data.streetSparten()) {
+    for (const { name } of this.data.streetSparten()) {
       const geometry = await this.geocoder.geocode(name);
       // The component may have been destroyed while awaiting the lookup.
       if (!geometry || !this.map || !this.streetLayer) {
@@ -133,10 +148,36 @@ export class MapPage implements AfterViewInit, OnDestroy {
       if (lines.length === 0) {
         continue;
       }
-      this.streets.push({ name, lines, sparten });
-      this.render();
+      this.geometryByStreet.set(name, lines);
+      this.rebuildStreets();
       this.frameStreets();
     }
+  }
+
+  /**
+   * Rebuild the list of streets to draw from the cached geometry, limited to
+   * the projects of the selected year (all years when none is selected). Only
+   * streets that have been geocoded so far are included.
+   */
+  private rebuildStreets(): void {
+    if (!this.map || !this.streetLayer) {
+      return;
+    }
+    const year = this.selectedYear();
+    const projects =
+      year === null
+        ? this.data.projects()
+        : this.data.projects().filter((p) => p.geschaeftsjahr === year);
+
+    this.streets.length = 0;
+    for (const { name, sparten } of aggregateStreetSparten(projects)) {
+      const lines = this.geometryByStreet.get(name);
+      if (!lines) {
+        continue;
+      }
+      this.streets.push({ name, lines, sparten });
+    }
+    this.render();
   }
 
   /** Fit the view to all located streets (only meaningfully zooms in once). */

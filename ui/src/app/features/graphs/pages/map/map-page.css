@@ -3,6 +3,44 @@
   height: 100%;
 }
 
+/* Year filter above the map. */
+.map-filter {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.map-filter__label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--on-surface-variant);
+}
+
+.map-filter__input {
+  appearance: none;
+  min-width: 12rem;
+  align-self: flex-start;
+  padding: 0.3rem 0.55rem;
+  font-family: inherit;
+  font-size: 0.82rem;
+  color: var(--on-surface);
+  background: var(--surface-container-high);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.map-filter__input:hover {
+  border-color: var(--outline);
+}
+
+.map-filter__input:focus-visible {
+  outline: 2px solid var(--primary-bright);
+  outline-offset: 2px;
+}
+
 .map {
   grid-column: 1 / -1;
   min-height: 540px;

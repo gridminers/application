@@ -6,6 +6,21 @@
     </p>
   </header>
 
+  <div class="graph-page__filters map-filter">
+    <label class="map-filter__label" for="map-year-select">Geschäftsjahr</label>
+    <select
+      id="map-year-select"
+      class="map-filter__input"
+      [value]="selectedYear() ?? ''"
+      (change)="onYearChange($any($event.target).value)"
+    >
+      <option value="">Alle Jahre</option>
+      @for (year of years(); track year) {
+        <option [value]="year">{{ year }}</option>
+      }
+    </select>
+  </div>
+
   <div class="graph-page__body">
     <div
       #mapContainer
