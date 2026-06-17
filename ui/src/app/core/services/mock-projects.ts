@@ -15,6 +15,7 @@ export const MOCK_PROJECTS: readonly Project[] = [
   {
     id: 'P-2024-001',
     projekttitel: 'Erneuerung Mittelspannungsnetz Weststadt',
+    strasse: 'Elbestraße',
     geschaeftsjahr: 2024,
     ausfuehrungszeit: { von: '2024-03-04', bis: '2025-09-30' },
     antragsgrund: 'Altersbedingter Austausch der Kabelstrecken zur Versorgungssicherheit.',
@@ -43,6 +44,7 @@ export const MOCK_PROJECTS: readonly Project[] = [
   {
     id: 'P-2024-002',
     projekttitel: 'Gasdruckregelstation Schunteraue',
+    strasse: 'Nordanger',
     geschaeftsjahr: 2024,
     ausfuehrungszeit: { von: '2024-05-06', bis: '2025-04-30' },
     antragsgrund: 'Kapazitätserweiterung für Neubaugebiet im Norden.',
@@ -70,6 +72,7 @@ export const MOCK_PROJECTS: readonly Project[] = [
   {
     id: 'P-2024-003',
     projekttitel: 'Trinkwasserleitung Sanierung Innenstadt',
+    strasse: 'Hamburger Straße',
     geschaeftsjahr: 2025,
     ausfuehrungszeit: { von: '2025-02-10', bis: '2026-08-31' },
     antragsgrund: 'Hohe Schadensrate und Wasserverluste in Graugussleitungen.',
@@ -97,6 +100,7 @@ export const MOCK_PROJECTS: readonly Project[] = [
   {
     id: 'P-2025-004',
     projekttitel: 'Glasfaser-Backbone Technologiepark',
+    strasse: 'Hermann-Blenk-Straße',
     geschaeftsjahr: 2025,
     ausfuehrungszeit: { von: '2025-04-01', bis: '2026-03-31' },
     antragsgrund: 'Digitale Anbindung von Umspannwerken und Gewerbegebiet.',
@@ -124,6 +128,7 @@ export const MOCK_PROJECTS: readonly Project[] = [
   {
     id: 'P-2025-005',
     projekttitel: 'Fernwärme-Ausbau Quartier Heidberg',
+    strasse: 'Sialkstraße',
     geschaeftsjahr: 2025,
     ausfuehrungszeit: { von: '2025-03-17', bis: '2027-06-30' },
     antragsgrund: 'Dekarbonisierung der Wärmeversorgung im Bestandsquartier.',
@@ -152,6 +157,7 @@ export const MOCK_PROJECTS: readonly Project[] = [
   {
     id: 'P-2025-006',
     projekttitel: 'Niederspannungs-Verstärkung Östliches Ringgebiet',
+    strasse: 'Heinrich Büssing Ring',
     geschaeftsjahr: 2025,
     ausfuehrungszeit: { von: '2025-06-02', bis: '2026-05-29' },
     antragsgrund: 'Lastzuwachs durch Wärmepumpen und Wallboxen.',
@@ -179,6 +185,7 @@ export const MOCK_PROJECTS: readonly Project[] = [
   {
     id: 'P-2026-007',
     projekttitel: 'Wasserwerk Bienrode Filtermodernisierung',
+    strasse: 'Bevenroder Straße',
     geschaeftsjahr: 2026,
     ausfuehrungszeit: { von: '2026-01-12', bis: '2027-05-31' },
     antragsgrund: 'Erhöhung der Aufbereitungskapazität und Energieeffizienz.',
@@ -207,6 +214,7 @@ export const MOCK_PROJECTS: readonly Project[] = [
     // Real example — extracted from "017_26 20 kV VL erw. Bienroder Wg" (Genehmigungs-Nr. 017/26).
     id: 'P-2026-008',
     projekttitel: '20 kV Stromversorgungsleitungen Bienroderweg',
+    strasse: 'Bienroderweg',
     geschaeftsjahr: 2026,
     ausfuehrungszeit: { von: '2026-02-23', bis: '2026-05-29' },
     antragsgrund:

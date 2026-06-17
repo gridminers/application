@@ -3,44 +3,22 @@ import { Sparte } from '../models/sparte';
 
 /**
  * Derivations that synthesise concepts not yet present in the source data
- * (street, trade/Gewerk, actual costs). Everything here is computed from the
- * existing {@link Project} fields and is fully deterministic, so charts stay
- * stable between renders. When the backend later supplies real values these
- * helpers can be dropped in favour of plain field reads.
+ * (trade/Gewerk, actual costs). Everything here is computed from the existing
+ * {@link Project} fields and is fully deterministic, so charts stay stable
+ * between renders. When the backend later supplies real values these helpers
+ * can be dropped in favour of plain field reads.
  */
 
 /* ------------------------------------------------------------------ *
- * Street / location (Straße)
+ * Street (Straße)
  * ------------------------------------------------------------------ */
 
 /**
- * Known Braunschweig locations to look for in a project title, mapped to a
- * canonical display name. Order matters — the first match wins, so longer or
- * more specific keywords should come first.
- */
-const STREET_KEYWORDS: readonly { keyword: string; label: string }[] = [
-  { keyword: 'bienrode', label: 'Bienrode' },
-  { keyword: 'weststadt', label: 'Weststadt' },
-  { keyword: 'schunteraue', label: 'Schunteraue' },
-  { keyword: 'innenstadt', label: 'Innenstadt' },
-  { keyword: 'technologiepark', label: 'Technologiepark' },
-  { keyword: 'heidberg', label: 'Heidberg' },
-  { keyword: 'ringgebiet', label: 'Ringgebiet' },
-];
-
-/**
- * Derive a street / location label for a project from its title.
- * Falls back to the last word of the title if no known location is found.
+ * The street a project is located on. Reads the `strasse` field supplied by the
+ * backend (the PDF-processing step extracts it from the source document).
  */
 export function projectStreet(p: Project): string {
-  const title = p.projekttitel.toLowerCase();
-  for (const { keyword, label } of STREET_KEYWORDS) {
-    if (title.includes(keyword)) {
-      return label;
-    }
-  }
-  const words = p.projekttitel.trim().split(/\s+/);
-  return words[words.length - 1] ?? 'Unbekannt';
+  return p.strasse.trim() || 'Unbekannt';
 }
 
 /* ------------------------------------------------------------------ *

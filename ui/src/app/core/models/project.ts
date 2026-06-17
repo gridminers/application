@@ -15,6 +15,8 @@ export interface Project {
   id: string;
   /** Projekttitel */
   projekttitel: string;
+  /** Straße — street the measure is located on, as extracted by the backend */
+  strasse: string;
   /** Geschäftsjahr — fiscal year; also the value used for the yearly evaluation */
   geschaeftsjahr: number;
   /** Ausführungszeit (von – bis) */
