@@ -43,3 +43,14 @@
 .map ::ng-deep .leaflet-control-attribution a {
   color: var(--on-surface-variant);
 }
+
+/* Lighten the street/border lines baked into the base tile layer, while
+   keeping the dark background close to the app surface. */
+.map ::ng-deep .map-base {
+  filter: brightness(1.25) contrast(0.92);
+}
+
+/* Lighten the OSM label text baked into the labels-only tile layer. */
+.map ::ng-deep .map-labels {
+  filter: brightness(1.7);
+}

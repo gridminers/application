@@ -34,15 +34,20 @@ export class MapPage implements AfterViewInit, OnDestroy {
       attributionControl: true,
     });
 
-    // Dark-themed raster tiles based on OpenStreetMap data (CARTO basemap).
+    const attribution =
+      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
+
+    // Dark-themed raster tiles based on OpenStreetMap data (CARTO basemap),
+    // split into a label-free base and a labels-only overlay so the label
+    // text can be lightened independently via CSS.
     L.tileLayer(
-      'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-      {
-        maxZoom: 19,
-        subdomains: 'abcd',
-        attribution:
-          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-      },
+      'https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png',
+      { maxZoom: 19, subdomains: 'abcd', attribution, className: 'map-base' },
+    ).addTo(this.map);
+
+    L.tileLayer(
+      'https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png',
+      { maxZoom: 19, subdomains: 'abcd', className: 'map-labels' },
     ).addTo(this.map);
   }
 
