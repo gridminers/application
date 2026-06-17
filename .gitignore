@@ -7,3 +7,4 @@ db.sqlite3
 **/.env
 challenge_data/
 challenge_data_test/
+challenge_data_mock/
