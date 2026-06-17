@@ -10,6 +10,7 @@ import { formatEuro } from '../../../../shared/chart-theme';
   selector: 'app-payment-plan',
   imports: [Echart],
   template: `<app-echart [options]="options()" [ariaLabel]="ariaLabel()" />`,
+  styles: `:host { display: block; height: 100%; }`,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PaymentPlan {

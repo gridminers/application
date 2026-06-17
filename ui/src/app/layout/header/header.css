@@ -28,7 +28,7 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-6);
-  min-height: 64px;
+  height: var(--header-height);
 }
 
 .brand {

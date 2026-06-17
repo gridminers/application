@@ -10,6 +10,7 @@ import { formatEuro, sparteLabel, SPARTE_COLORS } from '../../../../shared/chart
   selector: 'app-budget-by-division',
   imports: [Echart],
   template: `<app-echart [options]="options()" [ariaLabel]="ariaLabel()" />`,
+  styles: `:host { display: block; height: 100%; }`,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BudgetByDivision {
