@@ -32,6 +32,41 @@ in die Datenbank importiert.
 - **Automatischer Import** – PDFs werden vom Parser erkannt, per Vision-Modell ausgelesen und über die API ins Backend übernommen.
 - **Visualisierung** – Auswertungen über ECharts-Diagramme und Straßen-Geometrien auf einer Leaflet-Karte.
 
+## Architektur
+
+```mermaid
+flowchart LR
+    PDF["PDF-Antrag<br/>(parser/dump)"]
+
+    subgraph Parser["Parser · Python"]
+        Watch["Watch-Modus"]
+        Vision["Azure OpenAI<br/>Vision"]
+        Watch --> Vision
+    end
+
+    subgraph Backend["Backend · Django REST"]
+        API["REST API<br/>/api/..."]
+    end
+
+    DB[("PostgreSQL 16")]
+
+    subgraph Frontend["Frontend · Angular 22"]
+        UI["UI · ECharts &<br/>Leaflet (nginx)"]
+    end
+
+    User(["Benutzer"])
+
+    PDF --> Watch
+    Vision -- "POST /api/applications/import/" --> API
+    API <--> DB
+    UI -- "REST (HTTP)" --> API
+    User -- "http://localhost:4200" --> UI
+```
+
+Der **Parser** überwacht `parser/dump`, liest eingehende PDFs per Vision-Modell aus und schickt das
+Ergebnis an die **Backend-API**, die alle Daten in **PostgreSQL** persistiert. Das **Angular-Frontend**
+bezieht sämtliche Auswertungen über dieselbe REST-API.
+
 ## Projektstruktur
 
 ```
