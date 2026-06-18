@@ -1,7 +1,14 @@
 /* ------------------------------------------------------------------ *
  * Gridminers UI — global styles & design tokens
  * Design system: "Neutral Monochrome Technical System" (see docs/DESIGN.md)
- * A true-neutral, tonal dark theme with a high-visibility green accent.
+ *
+ * Two themes share the same token names:
+ *   • dark  — the default true-neutral tonal theme with a green accent
+ *             (declared on :root below).
+ *   • light — the BS|NETZ / BS|ENERGY corporate scheme (Blau #003399,
+ *             Rot #CC0000), declared under [data-theme="light"].
+ * The active theme is selected via the `data-theme` attribute on <html>
+ * (see core/theme/theme.ts).
  * ------------------------------------------------------------------ */
 
 :root {
@@ -94,6 +101,53 @@
     Helvetica, Arial, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas,
     monospace;
+}
+
+/* ------------------------------------------------------------------ *
+ * Light theme — BS|NETZ / BS|ENERGY corporate branding.
+ * Only the colour tokens are overridden; spacing, radii and typography
+ * are inherited from :root. The compatibility aliases resolve through
+ * var(), so overriding the base tokens is enough.
+ *
+ * Brand palette (with the accepted opacities baked in as rgba):
+ *   Blau #003399 — 100 / 60 / 30 / 10
+ *   Rot  #CC0000 — 100 / 60 / 30 / 10
+ * ------------------------------------------------------------------ */
+[data-theme="light"] {
+  /* Tonal surfaces — light scale on a soft blue-grey canvas. */
+  --surface-base: #eef1f8;             /* Level 0 — foundational canvas   */
+  --surface-container-lowest: #e2e7f3;
+  --surface-container-low: #e8ecf6;    /* recessed / hover wells          */
+  --surface-container: #ffffff;        /* Level 1 — cards & containers     */
+  --surface-container-high: #f6f8fc;   /* Level 2 — modals / popovers      */
+  --surface-container-highest: #eef2fa;
+  --surface-bright: #ffffff;
+
+  /* Text */
+  --on-surface: #1a2233;               /* primary text — near-black blue   */
+  --on-surface-variant: #56607a;       /* muted / secondary text           */
+
+  /* Lines */
+  --outline: #98a2bd;
+  --outline-variant: #d4dae9;          /* default border / separators      */
+
+  /* Accent — BS Blau */
+  --primary: #003399;                  /* Blau 100                          */
+  --primary-bright: #1a4dad;
+  --primary-hover: #002a7a;
+  --on-primary: #ffffff;               /* white text on the blue accent    */
+  --primary-container: rgba(0, 51, 153, 0.1);  /* Blau 10                   */
+  --on-primary-container: #003399;
+
+  /* Functional colours — Rot for errors, on-brand neutrals otherwise. */
+  --color-error: #cc0000;              /* Rot 100                          */
+  --color-warning: #b36b00;
+  --color-success: #1f7a3d;
+  --color-info: #56607a;
+
+  /* Shadows read against a light canvas, tinted toward the brand blue. */
+  --shadow-sm: 0 1px 2px rgba(0, 51, 153, 0.12);
+  --shadow-md: 0 8px 24px rgba(0, 51, 153, 0.14);
 }
 
 /* ------------------------------------------------------------------ *

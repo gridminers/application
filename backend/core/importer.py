@@ -1,13 +1,20 @@
 """
 Importer-Service.
 
-Orchestriert: Deduplizierung -> Parsen -> Fremdschlüssel auflösen -> Persistieren.
+Orchestriert: Deduplizierung -> LLM-Veredelung (Refining/Sanitizing/Enriching)
+-> Parsen -> Fremdschlüssel auflösen -> Persistieren. Der Veredelungsschritt
+bringt rohe Exporte in die kanonischen Formate, die die ``ValueParser``
+erwarten, sodass Anträge mit kleinen Formatproblemen nicht mehr abgelehnt
+werden (siehe ``refiner.py``).
+
 Kennt keine HTTP-Details (das macht die View); dadurch ist der Service auch aus
 Management-Commands oder Tasks heraus nutzbar.
 """
 
 from __future__ import annotations
 
+import hashlib
+import json
 import re
 from decimal import Decimal
 from typing import Any, Mapping, Optional
@@ -21,10 +28,12 @@ from .field_mapping import (
     LABEL_PAYMENT_SCHEDULE,
     SCALAR_FIELD_MAP,
     SURCHARGE_RULES,
+    field_type_for_label,
 )
 # Importe an die tatsächliche App anpassen.
 from .models import Application, Asset, Division, Street, Trade
 from .parsers import ParserRegistry, default_registry
+from .refiner import DocumentRefiner, default_refiner
 from .street_matching import RapidFuzzStreetMatcher, StreetMatcher
 
 _PERCENT_IN_LABEL = re.compile(r"\(\s*(\d+(?:[.,]\d+)?)\s*%\s*\)")
@@ -48,18 +57,41 @@ class ApplicationImporter:
             self,
             parser_registry: Optional[ParserRegistry] = None,
             street_matcher: Optional[StreetMatcher] = None,
+            refiner: Optional[DocumentRefiner] = None,
     ) -> None:
         self._parsers = parser_registry or default_registry()
         self._street_matcher = street_matcher or RapidFuzzStreetMatcher()
+        self._refiner = refiner or default_refiner()
 
-    @transaction.atomic
     def import_export(self, export: Mapping[str, Any]) -> Application:
-        """Importiert einen Export. Wirft ``DuplicateDocumentError`` bei Duplikat."""
-        sha256 = export["sha256"]
+        """Importiert einen Export im neuen Parser-Format.
+
+        Ablauf: Deduplizierung -> LLM-Veredelung (Refining/Sanitizing/
+        Enriching) -> Parsen -> Fremdschlüssel -> Persistieren.
+
+        Erwartet ein flaches ``targets``-Mapping (Label -> Rohwert/``null``).
+        Die Prüfsumme wird aus den *Rohdaten* abgeleitet, sodass bereits
+        importierte Extraktionen gar nicht erst durch das LLM geschickt werden.
+        Wirft ``DuplicateDocumentError`` bei einem bereits importierten Dokument.
+        """
+        source_file = export.get("source_file", "")
+        raw_targets = export.get("targets", {})
+        sha256 = self._compute_sha256(source_file, raw_targets)
         if Application.objects.filter(sha256=sha256).exists():
             raise DuplicateDocumentError(sha256)
 
-        fields_by_label = {field["label"]: field for field in export.get("fields", [])}
+        # Veredelung außerhalb der DB-Transaktion (externer Netzwerk-Call).
+        refined_targets = self._refiner.refine(
+            raw_targets, list(export.get("warnings", []) or [])
+        )
+        return self._persist(sha256, refined_targets)
+
+    @transaction.atomic
+    def _persist(
+            self, sha256: str, targets: Mapping[str, Any]
+    ) -> Application:
+        """Parst die (veredelten) ``targets`` und legt die ``Application`` an."""
+        fields_by_label = self._fields_from_targets(targets)
 
         data: dict[str, Any] = {"sha256": sha256}
         self._apply_scalar_fields(fields_by_label, data)
@@ -69,6 +101,47 @@ class ApplicationImporter:
         self._resolve_foreign_keys(fields_by_label, data)
 
         return Application.objects.create(**data)
+
+    # -- Eingabe-Normalisierung ----------------------------------------------
+
+    @staticmethod
+    def _compute_sha256(source_file: str, targets: Mapping[str, Any]) -> str:
+        """Leitet eine deterministische Prüfsumme aus dem Export ab.
+
+        Das neue Format liefert keine Prüfsumme mit; identische Extraktionen
+        (gleicher Dateiname + gleiche ``targets``) ergeben denselben Hash und
+        werden so weiterhin dedupliziert.
+        """
+        canonical = json.dumps(
+            {"source_file": source_file, "targets": dict(targets)},
+            sort_keys=True,
+            ensure_ascii=False,
+        )
+        return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+    @staticmethod
+    def _fields_from_targets(
+            targets: Mapping[str, Any]
+    ) -> dict[str, dict[str, Any]]:
+        """Wandelt das flache ``targets``-Mapping in Feld-Datensätze um.
+
+        Pro Label wird der passende Parser-Typ ermittelt, sodass die bestehende
+        Parser-Infrastruktur unverändert genutzt werden kann. ``null`` oder
+        leere Werte werden übersprungen.
+        """
+        fields: dict[str, dict[str, Any]] = {}
+        for label, value in targets.items():
+            if value is None:
+                continue
+            normalized = str(value).strip()
+            if not normalized:
+                continue
+            fields[label] = {
+                "label": label,
+                "type": field_type_for_label(label),
+                "value_normalized": normalized,
+            }
+        return fields
 
     # -- Teilschritte --------------------------------------------------------
 

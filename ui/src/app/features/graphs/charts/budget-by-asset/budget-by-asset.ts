@@ -9,8 +9,9 @@ import {
   sparteLabel,
   SPARTE_COLORS,
   chartTextStyle,
-  darkAxis,
-  darkTooltip,
+  chartAxis,
+  chartTooltip,
+  chartTextMuted,
 } from '../../../../shared/chart-theme';
 
 /** Horizontal bar chart: total budget (Gesamtkosten) per asset class. */
@@ -39,24 +40,24 @@ export class BudgetByAsset {
     // Sorted largest-first; reverse so the biggest bar sits at the top.
     const rows = [...this.data()].reverse();
     return {
-      textStyle: chartTextStyle,
+      textStyle: chartTextStyle(),
       grid: { left: 8, right: 24, top: 16, bottom: 8, containLabel: true },
       tooltip: {
         trigger: 'axis',
         axisPointer: { type: 'shadow' },
         valueFormatter: (v: unknown) => formatEuro(Number(v)),
-        ...darkTooltip(),
+        ...chartTooltip(),
       },
       xAxis: {
         type: 'value',
-        ...darkAxis(),
-        axisLabel: { formatter: (v: number) => formatAxisEuro(v), color: '#b8b8b8' },
+        ...chartAxis(),
+        axisLabel: { formatter: (v: number) => formatAxisEuro(v), color: chartTextMuted() },
       },
       yAxis: {
         type: 'category',
         data: rows.map((r) => r.asset),
-        ...darkAxis(),
-        axisLabel: { interval: 0, color: '#b8b8b8' },
+        ...chartAxis(),
+        axisLabel: { interval: 0, color: chartTextMuted() },
         splitLine: { show: false },
       },
       series: [

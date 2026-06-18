@@ -61,6 +61,14 @@ class Division(models.Model):
 class Asset(models.Model):
     """Asset – technisches Betriebsmittel oder Infrastrukturobjekt des Projekts."""
 
+    division = models.ForeignKey(
+        Division,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="assets",
+        verbose_name="Sparte",
+    )
     name = models.CharField(
         max_length=200,
         unique=True,
@@ -132,10 +140,10 @@ class Application(models.Model):
         verbose_name="Geschäftsjahr",
         help_text="Wird auch als Referenzjahr für die Jahresauswertung verwendet.",
     )
-    execution_start = models.DateField(
+    execution_start = models.TextField(
         verbose_name="Ausführungszeit von",
     )
-    execution_end = models.DateField(
+    execution_end = models.TextField(
         verbose_name="Ausführungszeit bis",
     )
     reason = models.TextField(

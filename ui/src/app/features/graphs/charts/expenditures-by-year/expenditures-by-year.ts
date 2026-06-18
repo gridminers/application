@@ -7,9 +7,11 @@ import {
   formatEuro,
   formatAxisEuro,
   chartTextStyle,
-  darkAxis,
-  darkTooltip,
-  CHART_ACCENT,
+  chartAxis,
+  chartTooltip,
+  chartAccent,
+  chartAccentSoft,
+  chartTextMuted,
 } from '../../../../shared/chart-theme';
 
 /** Compact euro label for axis ticks, scaling Tsd./Mio. to the magnitude. */
@@ -38,27 +40,28 @@ export class ExpendituresByYear {
 
   readonly options = computed<EChartsCoreOption>(() => {
     const rows = this.data();
+    const accent = chartAccent();
     return {
-      textStyle: chartTextStyle,
+      textStyle: chartTextStyle(),
       grid: { left: 8, right: 24, top: 16, bottom: 8, containLabel: true },
       tooltip: {
         trigger: 'axis',
         axisPointer: { type: 'line' },
         valueFormatter: (v: unknown) => formatEuro(Number(v)),
-        ...darkTooltip(),
+        ...chartTooltip(),
       },
       xAxis: {
         type: 'category',
         boundaryGap: false,
         data: rows.map((r) => String(r.year)),
-        ...darkAxis(),
-        axisLabel: { interval: 0, color: '#b8b8b8' },
+        ...chartAxis(),
+        axisLabel: { interval: 0, color: chartTextMuted() },
         splitLine: { show: false },
       },
       yAxis: {
         type: 'value',
-        ...darkAxis(),
-        axisLabel: { formatter: thousands, color: '#b8b8b8' },
+        ...chartAxis(),
+        axisLabel: { formatter: thousands, color: chartTextMuted() },
       },
       series: [
         {
@@ -67,9 +70,9 @@ export class ExpendituresByYear {
           data: rows.map((r) => r.gesamtkosten),
           smooth: true,
           symbolSize: 8,
-          lineStyle: { width: 3, color: CHART_ACCENT },
-          itemStyle: { color: CHART_ACCENT },
-          areaStyle: { color: 'rgba(0, 230, 57, 0.12)' },
+          lineStyle: { width: 3, color: accent },
+          itemStyle: { color: accent },
+          areaStyle: { color: chartAccentSoft() },
         },
       ],
     };

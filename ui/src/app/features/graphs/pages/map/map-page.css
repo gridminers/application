@@ -93,6 +93,15 @@
   filter: brightness(1.7);
 }
 
+/* The light (BS Netz) basemap already reads well; drop the dark-tile tweaks. */
+:host-context([data-theme="light"]) .map ::ng-deep .map-base {
+  filter: contrast(0.96);
+}
+
+:host-context([data-theme="light"]) .map ::ng-deep .map-labels {
+  filter: none;
+}
+
 /* Colour-to-division legend for the street markings. */
 .map ::ng-deep .map-legend {
   display: flex;

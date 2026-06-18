@@ -7,10 +7,11 @@ import {
   formatEuro,
   formatAxisEuro,
   chartTextStyle,
-  darkAxis,
-  darkTooltip,
-  CATEGORY_PALETTE,
-  CHART_TEXT,
+  chartAxis,
+  chartTooltip,
+  categoryPalette,
+  chartText,
+  chartTextMuted,
 } from '../../../../shared/chart-theme';
 
 /** Cost-type series rendered as stacked segments per trade. */
@@ -53,27 +54,27 @@ export class GewerkeBreakdown {
   readonly options = computed<EChartsCoreOption>(() => {
     const rows = this.data();
     return {
-      color: [...CATEGORY_PALETTE],
-      textStyle: chartTextStyle,
+      color: categoryPalette(),
+      textStyle: chartTextStyle(),
       grid: { left: 8, right: 16, top: 48, bottom: 8, containLabel: true },
-      legend: { top: 8, textStyle: { color: CHART_TEXT } },
+      legend: { top: 8, textStyle: { color: chartText() } },
       tooltip: {
         trigger: 'axis',
         axisPointer: { type: 'shadow' },
         valueFormatter: (v: unknown) => formatEuro(Number(v)),
-        ...darkTooltip(),
+        ...chartTooltip(),
       },
       xAxis: {
         type: 'category',
         data: rows.map((r) => r.gewerk),
-        ...darkAxis(),
-        axisLabel: { interval: 0, color: '#b8b8b8' },
+        ...chartAxis(),
+        axisLabel: { interval: 0, color: chartTextMuted() },
         splitLine: { show: false },
       },
       yAxis: {
         type: 'value',
-        ...darkAxis(),
-        axisLabel: { formatter: thousands, color: '#b8b8b8' },
+        ...chartAxis(),
+        axisLabel: { formatter: thousands, color: chartTextMuted() },
       },
       series: SERIES.map((s) => ({
         name: s.name,

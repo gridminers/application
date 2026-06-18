@@ -34,6 +34,27 @@ REST_FRAMEWORK = {
     ),
 }
 
+# LLM-Veredelung eingehender Parser-Exporte (Refining/Sanitizing/Enriching).
+# Eingehende ``targets`` werden vor dem Persistieren durch dasselbe
+# Azure-OpenAI-Modell geschickt, das auch der Parser nutzt, damit Anträge mit
+# kleinen Formatproblemen nicht mehr abgelehnt, sondern bereinigt werden.
+# Ohne API-Key bzw. bei ENABLED=False arbeitet der Refiner als Passthrough.
+LLM_REFINER = {
+    'ENABLED': os.getenv('LLM_REFINER_ENABLED', 'true').strip().lower()
+    in ('1', 'true', 'yes', 'on'),
+    'API_KEY': os.getenv('AZURE_OPENAI_API_KEY', '').strip(),
+    'MODEL': os.getenv('AZURE_OPENAI_MODEL', 'gpt-5.4').strip(),
+    'ENDPOINT': os.getenv(
+        'AZURE_OPENAI_ENDPOINT',
+        'https://internal-use-ai.cognitiveservices.azure.com/openai/responses',
+    ).strip(),
+    'API_VERSION': os.getenv(
+        'AZURE_OPENAI_API_VERSION', '2025-04-01-preview'
+    ).strip(),
+    'TIMEOUT': int(os.getenv('LLM_REFINER_TIMEOUT', '60')),
+    'MAX_RETRIES': int(os.getenv('LLM_REFINER_MAX_RETRIES', '3')),
+}
+
 # URLs
 ROOT_URLCONF = 'backend.urls'
 

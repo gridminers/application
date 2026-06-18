@@ -180,9 +180,15 @@ def post_result(out: dict, cfg: dict) -> None:
     try:
         resp = requests.post(cfg["import_url"], json=out, timeout=POST_TIMEOUT)
     except requests.RequestException as exc:
-        print(f"[post]  submit failed: {exc}")
+        print(f"[post]  submit failed: {exc}", flush=True)
         return
-    print(f"[post]  submit status {resp.status_code}")
+    body = resp.text
+    if not body:
+        # Fall back to raw bytes in case decoding produced an empty string.
+        body = repr(resp.content)
+    print(f"[post]  submit status {resp.status_code}", flush=True)
+    print(f"[post]  request body: {json.dumps(out, ensure_ascii=False)}", flush=True)
+    print(f"[post]  response body: {body}", flush=True)
 
 
 def is_stable(path: Path) -> bool:

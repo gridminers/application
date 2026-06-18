@@ -2,6 +2,7 @@ import {
   AfterViewInit,
   ChangeDetectionStrategy,
   Component,
+  effect,
   ElementRef,
   inject,
   OnDestroy,
@@ -16,6 +17,7 @@ import { aggregateStreetSparten, ProjectData } from '../../../../core/services/p
 import { projectStreet } from '../../../../core/services/project-derivations';
 import { StreetGeometryStore } from '../../../../core/services/street-geometry-store';
 import { STREET_COLORS } from '../../../../shared/chart-theme';
+import { theme, Theme } from '../../../../core/theme/theme';
 import { DataStatus } from '../../../../shared/data-status/data-status';
 
 /** Geographic center of Braunschweig. */
@@ -72,10 +74,22 @@ export class MapPage implements AfterViewInit, OnDestroy {
 
   private map?: L.Map;
   private streetLayer?: L.FeatureGroup;
+  /** Label-free base tiles; swapped when the theme changes. */
+  private mapBase?: L.TileLayer;
+  /** Labels-only overlay tiles; swapped when the theme changes. */
+  private mapLabels?: L.TileLayer;
   private readonly streets: LocatedStreet[] = [];
   /** Geocoded geometry per street name, cached so year changes don't refetch. */
   private readonly geometryByStreet = new Map<string, L.LatLng[][]>();
   private readonly redraw = () => this.render();
+
+  /** Swap the CARTO basemap to match the active theme once the map exists. */
+  private readonly basemapEffect = effect(() => {
+    const active = theme();
+    if (this.map) {
+      this.applyBasemap(active);
+    }
+  });
 
   ngAfterViewInit(): void {
     this.map = L.map(this.mapContainer().nativeElement, {
@@ -85,21 +99,10 @@ export class MapPage implements AfterViewInit, OnDestroy {
       attributionControl: true,
     });
 
-    const attribution =
-      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
-
-    // Dark-themed raster tiles based on OpenStreetMap data (CARTO basemap),
-    // split into a label-free base and a labels-only overlay so the label
-    // text can be lightened independently via CSS.
-    L.tileLayer(
-      'https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png',
-      { maxZoom: 19, subdomains: 'abcd', attribution, className: 'map-base' },
-    ).addTo(this.map);
-
-    L.tileLayer(
-      'https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png',
-      { maxZoom: 19, subdomains: 'abcd', className: 'map-labels' },
-    ).addTo(this.map);
+    // Raster tiles based on OpenStreetMap data (CARTO basemap), split into a
+    // label-free base and a labels-only overlay so the label text can be tuned
+    // independently via CSS. The dark/light variant follows the app theme.
+    this.applyBasemap(theme());
 
     this.streetLayer = L.featureGroup().addTo(this.map);
     this.map.on('zoomend', this.redraw);
@@ -108,11 +111,40 @@ export class MapPage implements AfterViewInit, OnDestroy {
     void this.highlightManagedStreets();
   }
 
+  /**
+   * (Re)load the CARTO basemap tiles for the given theme. Tiles live in the
+   * tile pane, always below the street overlays, so swapping them never hides
+   * the markings.
+   */
+  private applyBasemap(active: Theme): void {
+    if (!this.map) {
+      return;
+    }
+    this.mapBase?.remove();
+    this.mapLabels?.remove();
+
+    const variant = active === 'light' ? 'light' : 'dark';
+    const attribution =
+      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
+
+    this.mapBase = L.tileLayer(
+      `https://{s}.basemaps.cartocdn.com/${variant}_nolabels/{z}/{x}/{y}{r}.png`,
+      { maxZoom: 19, subdomains: 'abcd', attribution, className: 'map-base' },
+    ).addTo(this.map);
+
+    this.mapLabels = L.tileLayer(
+      `https://{s}.basemaps.cartocdn.com/${variant}_only_labels/{z}/{x}/{y}{r}.png`,
+      { maxZoom: 19, subdomains: 'abcd', className: 'map-labels' },
+    ).addTo(this.map);
+  }
+
   ngOnDestroy(): void {
     this.map?.off('zoomend', this.redraw);
     this.map?.remove();
     this.map = undefined;
     this.streetLayer = undefined;
+    this.mapBase = undefined;
+    this.mapLabels = undefined;
     this.streets.length = 0;
   }
 

@@ -7,9 +7,10 @@ import {
   sparteLabel,
   SPARTE_COLORS,
   chartTextStyle,
-  darkAxis,
-  darkTooltip,
-  CHART_TEXT,
+  chartAxis,
+  chartTooltip,
+  chartText,
+  chartTextMuted,
 } from '../../../../shared/chart-theme';
 
 /** Line chart: average price per metre (€/m) per division over the years. */
@@ -41,25 +42,25 @@ export class PricePerMeter {
   readonly options = computed<EChartsCoreOption>(() => {
     const d = this.data();
     return {
-      textStyle: chartTextStyle,
+      textStyle: chartTextStyle(),
       grid: { left: 8, right: 24, top: 48, bottom: 8, containLabel: true },
-      legend: { top: 8, textStyle: { color: CHART_TEXT } },
+      legend: { top: 8, textStyle: { color: chartText() } },
       tooltip: {
         trigger: 'axis',
         valueFormatter: (v: unknown) =>
           v === null || v === undefined ? '—' : `${v} €/m`,
-        ...darkTooltip(),
+        ...chartTooltip(),
       },
       xAxis: {
         type: 'category',
         data: d.years.map(String),
-        ...darkAxis(),
+        ...chartAxis(),
         splitLine: { show: false },
       },
       yAxis: {
         type: 'value',
-        ...darkAxis(),
-        axisLabel: { formatter: '{value} €/m', color: '#b8b8b8' },
+        ...chartAxis(),
+        axisLabel: { formatter: '{value} €/m', color: chartTextMuted() },
       },
       series: d.bySparte.map((s) => ({
         name: sparteLabel(s.sparte),

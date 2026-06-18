@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import re
 from abc import ABC, abstractmethod
-from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
 from typing import Any, Mapping
 
@@ -87,35 +86,34 @@ class LengthParser(ValueParser):
 
 
 class DateRangeParser(ValueParser):
-    """'TT/MM/JJJJ - TT/MM/JJJJ' -> (start, end)."""
+    """'von - bis' -> (start, end) als freie Strings.
+
+    Es wird keine Datumsvalidierung mehr erzwungen. Lässt sich der Wert in
+    zwei durch ``-`` getrennte Teile zerlegen, werden diese als ``start`` und
+    ``end`` übernommen, ansonsten landet der gesamte Wert in ``start``.
+    """
 
     _SEPARATOR = re.compile(r"\s+-\s+")
-    _DATE_FORMAT = "%d/%m/%Y"
 
-    def parse(self, field: Mapping[str, Any]) -> tuple[date, date]:
+    def parse(self, field: Mapping[str, Any]) -> tuple[str, str]:
         raw = self.raw_value(field)
-        parts = self._SEPARATOR.split(raw)
-        if len(parts) != 2:
-            raise FieldParseError(f"Kein gültiger Zeitraum: {raw!r}.")
-        return self._to_date(parts[0]), self._to_date(parts[1])
-
-    def _to_date(self, value: str) -> date:
-        try:
-            return datetime.strptime(value.strip(), self._DATE_FORMAT).date()
-        except ValueError as exc:
-            raise FieldParseError(f"Ungültiges Datum: {value!r}.") from exc
+        parts = self._SEPARATOR.split(raw, maxsplit=1)
+        if len(parts) == 2:
+            return parts[0].strip(), parts[1].strip()
+        return raw, ""
 
 
 class PaymentPlanParser(ValueParser):
     """Zahlungsplan -> Liste aus {'year', 'share', 'amount'}.
 
-    ``share`` ist ein Bruch (50 % -> 0.5), ``amount`` ein Decimal-String
-    (JSON-serialisierbar).
+    Neues Parser-Format je Eintrag: ``2024: 100 % / 6.956 €`` (Jahr, Anteil,
+    Betrag), Einträge durch ``;`` getrennt. ``share`` ist ein Bruch
+    (100 % -> 1.0), ``amount`` ein Decimal-String (JSON-serialisierbar).
     """
 
     _ENTRY = re.compile(
-        r"(?P<year>\d{4})\s*:\s*(?P<amount>[\d.,]+)\s*€\s*"
-        r"\(\s*(?P<share>\d+)\s*%\s*\)"
+        r"(?P<year>\d{4})\s*:\s*(?P<share>\d+)\s*%\s*/\s*"
+        r"(?P<amount>[\d.,]+)\s*€"
     )
 
     def parse(self, field: Mapping[str, Any]) -> list[dict[str, Any]]:

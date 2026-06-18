@@ -1,4 +1,5 @@
 import { Sparte, SPARTE_LABELS } from '../core/models/sparte';
+import { isLightTheme } from '../core/theme/theme';
 
 /** Brand colours per utility division (mirrors CSS tokens in styles.css). */
 export const SPARTE_COLORS: Record<Sparte, string> = {
@@ -24,66 +25,120 @@ export const STREET_COLORS: Record<Sparte, string> = {
   Sonstige: '#9aa0a6', // neutral grey
 };
 
-/**
- * Qualitative palette for non-division categories (e.g. cost types).
- * On-brand monochrome: led by the accent green and stepped through the
- * neutral grayscale, matching the "Neutral Monochrome Technical System".
- */
-export const CATEGORY_PALETTE: readonly string[] = [
-  '#00e639',
-  '#72ff70',
-  '#8a8a8a',
-  '#b8b8b8',
-  '#3b3b3b',
-];
-
 /* ------------------------------------------------------------------ *
- * Dark-theme chart styling tokens (mirror the CSS design tokens).
- * ECharts renders to a canvas and cannot read CSS variables, so the
- * palette is duplicated here.
+ * Theme-aware chart styling tokens. ECharts renders to a canvas and
+ * cannot read CSS variables, so the two palettes are mirrored here and
+ * selected at build time via the reactive `theme` signal. Because the
+ * helpers below read that signal, any chart `computed()` that calls them
+ * recomputes when the user switches themes.
+ *
+ * The light palette uses the BS|NETZ brand colours:
+ *   Blau #003399 (100/60/30/10) and Rot #CC0000 (100/60/30/10).
  * ------------------------------------------------------------------ */
 
-/** Accent green used for primary single-series charts. */
-export const CHART_ACCENT = '#00e639';
-/** Primary text colour on the dark canvas. */
-export const CHART_TEXT = '#e2e2e2';
+/** Pick the dark or light variant for the active theme. */
+function pick<T>(dark: T, light: T): T {
+  return isLightTheme() ? light : dark;
+}
+
+/** Accent colour for primary single-series charts (green / BS Blau). */
+export function chartAccent(): string {
+  return pick('#00e639', '#003399');
+}
+
+/** Translucent accent fill (e.g. line-chart area). */
+export function chartAccentSoft(): string {
+  return pick('rgba(0, 230, 57, 0.12)', 'rgba(0, 51, 153, 0.08)');
+}
+
+/** Translucent accent fill for difference bars (Blau 30 in light mode). */
+export function chartAccentBar(): string {
+  return pick('rgba(0, 230, 57, 0.4)', 'rgba(0, 51, 153, 0.3)');
+}
+
+/** Secondary series colour (amber / BS Rot) — e.g. Ist vs. Plan. */
+export function chartSecondary(): string {
+  return pick('#e8a700', '#cc0000');
+}
+
+/** Translucent secondary fill for difference bars (Rot 30 in light mode). */
+export function chartSecondaryBar(): string {
+  return pick('rgba(232, 167, 0, 0.4)', 'rgba(204, 0, 0, 0.3)');
+}
+
+/** Primary text colour on the chart canvas. */
+export function chartText(): string {
+  return pick('#e2e2e2', '#1a2233');
+}
+
 /** Muted text colour for axis labels. */
-export const CHART_TEXT_MUTED = '#b8b8b8';
+export function chartTextMuted(): string {
+  return pick('#b8b8b8', '#56607a');
+}
+
 /** Axis / border line colour. */
-export const CHART_AXIS_LINE = '#3b3b3b';
+export function chartAxisLine(): string {
+  return pick('#3b3b3b', '#d4dae9');
+}
+
 /** Subtle grid split lines. */
-export const CHART_SPLIT_LINE = 'rgba(138, 138, 138, 0.18)';
-/** Card surface colour — used to separate adjacent pie slices. */
-export const CHART_SURFACE = '#1a1a1a';
+export function chartSplitLine(): string {
+  return pick('rgba(138, 138, 138, 0.18)', 'rgba(0, 51, 153, 0.1)');
+}
+
+/** Card surface colour — used to separate adjacent pie slices / bars. */
+export function chartSurface(): string {
+  return pick('#1a1a1a', '#ffffff');
+}
+
+/**
+ * Qualitative palette for non-division categories (e.g. cost types).
+ * Dark: on-brand monochrome led by the accent green through neutral greys.
+ * Light: BS Blau and Rot stepped through their accepted opacities.
+ */
+export function categoryPalette(): string[] {
+  return isLightTheme()
+    ? [
+        '#003399', // Blau 100
+        '#cc0000', // Rot 100
+        'rgba(0, 51, 153, 0.6)', // Blau 60
+        'rgba(204, 0, 0, 0.6)', // Rot 60
+        'rgba(0, 51, 153, 0.3)', // Blau 30
+      ]
+    : ['#00e639', '#72ff70', '#8a8a8a', '#b8b8b8', '#3b3b3b'];
+}
 
 /** Monospaced font stack for data-heavy axis labels and legends. */
 export const CHART_FONT_MONO =
   '"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
 
-/** Base textStyle shared by every chart. */
-export const chartTextStyle = {
-  color: CHART_TEXT,
-  fontFamily: CHART_FONT_MONO,
-} as const;
-
-/** Default styling for a category/value axis on the dark canvas. */
-export function darkAxis(): Record<string, unknown> {
+/** Base textStyle shared by every chart (theme-aware text colour). */
+export function chartTextStyle(): Record<string, unknown> {
   return {
-    axisLabel: { color: CHART_TEXT_MUTED, fontFamily: CHART_FONT_MONO },
-    axisLine: { lineStyle: { color: CHART_AXIS_LINE } },
-    axisTick: { lineStyle: { color: CHART_AXIS_LINE } },
-    splitLine: { lineStyle: { color: CHART_SPLIT_LINE } },
+    color: chartText(),
+    fontFamily: CHART_FONT_MONO,
   };
 }
 
-/** Tooltip styling for the dark canvas. */
-export function darkTooltip(): Record<string, unknown> {
+/** Default styling for a category/value axis, themed to the active scheme. */
+export function chartAxis(): Record<string, unknown> {
   return {
-    backgroundColor: '#242424',
-    borderColor: '#3b3b3b',
-    textStyle: { color: CHART_TEXT, fontFamily: CHART_FONT_MONO },
+    axisLabel: { color: chartTextMuted(), fontFamily: CHART_FONT_MONO },
+    axisLine: { lineStyle: { color: chartAxisLine() } },
+    axisTick: { lineStyle: { color: chartAxisLine() } },
+    splitLine: { lineStyle: { color: chartSplitLine() } },
   };
 }
+
+/** Tooltip styling, themed to the active scheme. */
+export function chartTooltip(): Record<string, unknown> {
+  return {
+    backgroundColor: pick('#242424', '#ffffff'),
+    borderColor: pick('#3b3b3b', '#d4dae9'),
+    textStyle: { color: chartText(), fontFamily: CHART_FONT_MONO },
+  };
+}
+
 
 /** Format a number as euros without decimals (de-DE). */
 export function formatEuro(value: number): string {

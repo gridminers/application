@@ -56,3 +56,45 @@ LABEL_EXECUTION_TIME = "Ausführungszeit (von - bis)"
 LABEL_DIVISION = "Sparte"
 LABEL_ASSET = "Asset"
 LABEL_PAYMENT_SCHEDULE = "Zahlungsplan"
+
+
+# Das neue Parser-Format liefert ein flaches ``targets``-Mapping ohne
+# Typ-Information pro Feld. Der Datentyp wird daher anhand des Labels
+# bestimmt, damit der passende ``ValueParser`` gewählt werden kann.
+LABEL_TYPE_MAP: dict[str, str] = {
+    "Projekttitel": "string",
+    "Geschäftsjahr": "year",
+    LABEL_EXECUTION_TIME: "date_range",
+    "Antragsgrund": "string",
+    LABEL_DIVISION: "string",
+    LABEL_ASSET: "string",
+    "PSP-Element": "identifier",
+    "Leitungsmeter": "length",
+    "Euro pro Meter Trassenlänge": "currency",
+    "Materialkosten (netto)": "currency",
+    "Fremdleistungen": "currency",
+    "Eigenleistungen": "currency",
+    "Ingenieurleistungen Dritte": "currency",
+    "Gesamtkosten ohne Zuschläge": "currency",
+    "Zwischensumme Zuschläge": "currency",
+    "Gesamtkosten": "currency",
+    LABEL_PAYMENT_SCHEDULE: "payment_plan",
+}
+
+# Fallback-Typ für unbekannte/unzugeordnete Labels.
+DEFAULT_FIELD_TYPE = "string"
+
+
+def field_type_for_label(label: str) -> str:
+    """Liefert den Parser-Typ für ein ``targets``-Label des neuen Formats.
+
+    Zuschlagsfelder tragen ihren Prozentsatz im Label ('… (17%)') und werden
+    deshalb über ihren stabilen Präfix erkannt; alles andere kommt aus
+    ``LABEL_TYPE_MAP`` bzw. dem Fallback.
+    """
+    if label in LABEL_TYPE_MAP:
+        return LABEL_TYPE_MAP[label]
+    for rule in SURCHARGE_RULES:
+        if label.startswith(rule.label_prefix):
+            return "currency"
+    return DEFAULT_FIELD_TYPE
