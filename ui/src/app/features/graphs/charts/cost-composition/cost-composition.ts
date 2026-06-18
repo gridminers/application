@@ -4,12 +4,12 @@ import type { EChartsCoreOption } from 'echarts/core';
 import { CostComposition as CostCompositionData } from '../../../../core/services/project-data';
 import { Echart } from '../../../../shared/echart/echart';
 import {
-  CATEGORY_PALETTE,
+  categoryPalette,
   formatEuro,
   chartTextStyle,
-  darkTooltip,
-  CHART_SURFACE,
-  CHART_TEXT,
+  chartTooltip,
+  chartSurface,
+  chartText,
 } from '../../../../shared/chart-theme';
 
 interface Slice {
@@ -56,19 +56,19 @@ export class CostComposition {
   );
 
   readonly options = computed<EChartsCoreOption>(() => ({
-    color: [...CATEGORY_PALETTE],
-    textStyle: chartTextStyle,
+    color: categoryPalette(),
+    textStyle: chartTextStyle(),
     tooltip: {
       trigger: 'item',
       valueFormatter: (v: unknown) => formatEuro(Number(v)),
-      ...darkTooltip(),
+      ...chartTooltip(),
     },
     legend: {
       type: 'scroll',
       orient: 'vertical',
       right: 0,
       top: 'middle',
-      textStyle: { color: CHART_TEXT },
+      textStyle: { color: chartText() },
     },
     series: [
       {
@@ -76,7 +76,7 @@ export class CostComposition {
         radius: ['50%', '78%'],
         center: ['32%', '50%'],
         avoidLabelOverlap: true,
-        itemStyle: { borderColor: CHART_SURFACE, borderWidth: 2 },
+        itemStyle: { borderColor: chartSurface(), borderWidth: 2 },
         label: { show: false },
         data: this.slices(),
       },

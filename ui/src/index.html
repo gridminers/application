@@ -5,9 +5,25 @@
   <title>Gridminers — Netz Braunschweig</title>
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="color-scheme" content="dark">
+  <meta name="color-scheme" content="dark light">
   <meta name="theme-color" content="#0c160a">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <!-- Apply the saved/preferred theme before first paint to avoid a flash. -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('gm-theme');
+        if (t !== 'light' && t !== 'dark') {
+          t = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches
+            ? 'light'
+            : 'dark';
+        }
+        var root = document.documentElement;
+        root.dataset.theme = t;
+        root.style.colorScheme = t;
+      } catch (e) {}
+    })();
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link

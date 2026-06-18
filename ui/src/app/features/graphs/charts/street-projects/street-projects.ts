@@ -4,9 +4,10 @@ import type { EChartsCoreOption } from 'echarts/core';
 import { Echart } from '../../../../shared/echart/echart';
 import {
   chartTextStyle,
-  darkAxis,
-  darkTooltip,
-  CHART_SURFACE,
+  chartAxis,
+  chartTooltip,
+  chartSurface,
+  chartTextMuted,
 } from '../../../../shared/chart-theme';
 
 /** Data for the street-projects chart: counts per division, stacked by year. */
@@ -52,25 +53,25 @@ export class StreetProjects {
     const d = this.data();
     const colors = d.categoryColors;
     return {
-      textStyle: chartTextStyle,
+      textStyle: chartTextStyle(),
       grid: { left: 8, right: 16, top: 16, bottom: 8, containLabel: true },
       tooltip: {
         trigger: 'axis',
         axisPointer: { type: 'shadow' },
-        ...darkTooltip(),
+        ...chartTooltip(),
       },
       xAxis: {
         type: 'category',
         data: d.categories,
-        ...darkAxis(),
-        axisLabel: { interval: 0, color: '#b8b8b8' },
+        ...chartAxis(),
+        axisLabel: { interval: 0, color: chartTextMuted() },
         splitLine: { show: false },
       },
       yAxis: {
         type: 'value',
         minInterval: 1,
-        ...darkAxis(),
-        axisLabel: { color: '#b8b8b8' },
+        ...chartAxis(),
+        axisLabel: { color: chartTextMuted() },
       },
       series: d.series.map((s) => ({
         name: s.name,
@@ -83,7 +84,7 @@ export class StreetProjects {
           // Colour each bar by its division (Sparte) to match the map's lines;
           // a thin surface-coloured border keeps the stacked year segments legible.
           color: (params: { dataIndex: number }) => colors[params.dataIndex],
-          borderColor: CHART_SURFACE,
+          borderColor: chartSurface(),
           borderWidth: 1,
         },
       })),

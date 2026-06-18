@@ -6,9 +6,13 @@ import {
   formatEuro,
   formatAxisEuro,
   chartTextStyle,
-  darkAxis,
-  darkTooltip,
-  CHART_ACCENT,
+  chartAxis,
+  chartTooltip,
+  chartAccent,
+  chartAccentBar,
+  chartSecondary,
+  chartSecondaryBar,
+  chartTextMuted,
 } from '../../../../shared/chart-theme';
 
 /** Planned vs. actual totals (summed over the closed years). */
@@ -16,13 +20,6 @@ export interface PlanIstTotalsData {
   geplant: number;
   ist: number;
 }
-
-const PLAN_COLOR = CHART_ACCENT;
-const IST_COLOR = '#e8a700';
-/** Diff-bar fill when the plan was higher (under-run). */
-const PLAN_DIFF_COLOR = 'rgba(0, 230, 57, 0.4)';
-/** Diff-bar fill when the actuals were higher (over-run). */
-const IST_DIFF_COLOR = 'rgba(232, 167, 0, 0.4)';
 
 /** Compact euro label for axis ticks, scaling Tsd./Mio. to the magnitude. */
 function thousands(v: number): string {
@@ -55,26 +52,28 @@ export class PlanIstTotals {
     const d = this.data();
     const diff = Math.abs(d.ist - d.geplant);
     const istHigher = d.ist > d.geplant;
+    const planColor = chartAccent();
+    const istColor = chartSecondary();
     return {
-      textStyle: chartTextStyle,
+      textStyle: chartTextStyle(),
       grid: { left: 8, right: 24, top: 16, bottom: 8, containLabel: true },
       tooltip: {
         trigger: 'axis',
         axisPointer: { type: 'shadow' },
         valueFormatter: (v: unknown) => formatEuro(Number(v)),
-        ...darkTooltip(),
+        ...chartTooltip(),
       },
       xAxis: {
         type: 'category',
         data: ['Geplant', 'Ist', 'Differenz'],
-        ...darkAxis(),
-        axisLabel: { interval: 0, color: '#b8b8b8' },
+        ...chartAxis(),
+        axisLabel: { interval: 0, color: chartTextMuted() },
         splitLine: { show: false },
       },
       yAxis: {
         type: 'value',
-        ...darkAxis(),
-        axisLabel: { formatter: thousands, color: '#b8b8b8' },
+        ...chartAxis(),
+        axisLabel: { formatter: thousands, color: chartTextMuted() },
       },
       series: [
         {
@@ -82,12 +81,12 @@ export class PlanIstTotals {
           barMaxWidth: 96,
           itemStyle: { borderRadius: [6, 6, 0, 0] },
           data: [
-            { value: d.geplant, itemStyle: { color: PLAN_COLOR } },
-            { value: d.ist, itemStyle: { color: IST_COLOR } },
+            { value: d.geplant, itemStyle: { color: planColor } },
+            { value: d.ist, itemStyle: { color: istColor } },
             {
               value: diff,
               itemStyle: {
-                color: istHigher ? IST_DIFF_COLOR : PLAN_DIFF_COLOR,
+                color: istHigher ? chartSecondaryBar() : chartAccentBar(),
               },
             },
           ],

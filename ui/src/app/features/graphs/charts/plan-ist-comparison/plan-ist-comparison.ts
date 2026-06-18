@@ -7,21 +7,15 @@ import {
   formatEuro,
   formatAxisEuro,
   chartTextStyle,
-  darkAxis,
-  darkTooltip,
-  CHART_ACCENT,
-  CHART_TEXT,
-  CHART_TEXT_MUTED,
+  chartAxis,
+  chartTooltip,
+  chartAccent,
+  chartAccentBar,
+  chartSecondary,
+  chartSecondaryBar,
+  chartText,
+  chartTextMuted,
 } from '../../../../shared/chart-theme';
-
-/** Line colour for planned amounts (Geplant). */
-const PLAN_COLOR = CHART_ACCENT;
-/** Line colour for actual amounts (Ist). */
-const IST_COLOR = '#e8a700';
-/** Diff-bar fill when the plan was higher (under-run). */
-const PLAN_BAR = 'rgba(0, 230, 57, 0.4)';
-/** Diff-bar fill when the actuals were higher (over-run). */
-const IST_BAR = 'rgba(232, 167, 0, 0.4)';
 
 /** Compact euro label for axis ticks, scaling Tsd./Mio. to the magnitude. */
 function thousands(v: number): string {
@@ -64,12 +58,16 @@ export class PlanIstComparison {
 
   readonly options = computed<EChartsCoreOption>(() => {
     const rows = this.data();
+    const planColor = chartAccent();
+    const istColor = chartSecondary();
+    const planBar = chartAccentBar();
+    const istBar = chartSecondaryBar();
     return {
-      textStyle: chartTextStyle,
+      textStyle: chartTextStyle(),
       grid: { left: 8, right: 8, top: 48, bottom: 8, containLabel: true },
       legend: {
         top: 8,
-        textStyle: { color: CHART_TEXT },
+        textStyle: { color: chartText() },
         data: ['Geplant', 'Ist', 'Differenz'],
       },
       tooltip: {
@@ -77,30 +75,30 @@ export class PlanIstComparison {
         axisPointer: { type: 'cross' },
         valueFormatter: (v: unknown) =>
           v === null || v === undefined ? '—' : formatEuro(Number(v)),
-        ...darkTooltip(),
+        ...chartTooltip(),
       },
       xAxis: {
         type: 'category',
         data: rows.map((r) => String(r.year)),
-        ...darkAxis(),
+        ...chartAxis(),
         splitLine: { show: false },
       },
       yAxis: [
         {
           type: 'value',
           name: 'Kosten',
-          nameTextStyle: { color: CHART_TEXT_MUTED },
-          ...darkAxis(),
-          axisLabel: { formatter: thousands, color: CHART_TEXT_MUTED },
+          nameTextStyle: { color: chartTextMuted() },
+          ...chartAxis(),
+          axisLabel: { formatter: thousands, color: chartTextMuted() },
         },
         {
           type: 'value',
           name: 'Differenz',
           position: 'right',
-          nameTextStyle: { color: CHART_TEXT_MUTED },
-          ...darkAxis(),
+          nameTextStyle: { color: chartTextMuted() },
+          ...chartAxis(),
           splitLine: { show: false },
-          axisLabel: { formatter: thousands, color: CHART_TEXT_MUTED },
+          axisLabel: { formatter: thousands, color: chartTextMuted() },
         },
       ],
       series: [
@@ -118,7 +116,7 @@ export class PlanIstComparison {
             const istHigher = r.ist > r.geplant;
             return {
               value: Math.abs(r.geplant - r.ist),
-              itemStyle: { color: istHigher ? IST_BAR : PLAN_BAR },
+              itemStyle: { color: istHigher ? istBar : planBar },
             };
           }),
         },
@@ -129,8 +127,8 @@ export class PlanIstComparison {
           z: 3,
           symbolSize: 8,
           data: rows.map((r) => r.geplant),
-          lineStyle: { width: 3, color: PLAN_COLOR },
-          itemStyle: { color: PLAN_COLOR },
+          lineStyle: { width: 3, color: planColor },
+          itemStyle: { color: planColor },
         },
         {
           name: 'Ist',
@@ -140,8 +138,8 @@ export class PlanIstComparison {
           symbolSize: 8,
           connectNulls: false,
           data: rows.map((r) => r.ist),
-          lineStyle: { width: 3, color: IST_COLOR, type: 'dashed' },
-          itemStyle: { color: IST_COLOR },
+          lineStyle: { width: 3, color: istColor, type: 'dashed' },
+          itemStyle: { color: istColor },
         },
       ],
     };
