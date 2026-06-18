@@ -1,6 +1,7 @@
 # To dos
 
-1. EasyParser für Bulk-Parser vorbereiten
-2. Bulk-Export ausführen
-3. Sanitizer überarbeiten (Ausgabe vom EasyParser verarbeiten)
-4. Integration Backend/UI
+1. Realdaten aus Excel mit Soll-Daten mergen
+2. EasyParser für Bulk-Parser vorbereiten
+3. Bulk-Export ausführen
+4. Sanitizer überarbeiten (Ausgabe vom EasyParser verarbeiten)
+5. Integration Backend/UI
