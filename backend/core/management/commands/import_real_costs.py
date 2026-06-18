@@ -1,13 +1,33 @@
 """
-Management Command zum Import der Ist-Kosten aus einer Excel-Tabelle.
+Django-Management-Command: Realkosten aus einer CSV-Datei importieren.
+
+Liest eine CSV-Datei (Spalten wie im Investitionsantrag-Export) ein und
+aktualisiert die `real_*`-Felder der passenden `Application`-Objekte.
+Die Zuordnung erfolgt ausschließlich über die Spalte "PSP-Element".
+
+Spaltenzuordnung (CSV -> Modellfeld):
+    PSP-Element                  -> psp_element              (Lookup-Schlüssel)
+    Materialkosten               -> real_material_costs
+    Fremdleistungen              -> real_external_services
+    Eigenleistungen              -> real_internal_services
+    Ingenieurleistungen Dritte   -> real_engineering_services
+    Materialkostenzuschläge      -> real_material_surcharge
+    Investitionszuschläge        -> real_investment_surcharge
+    Gesamtkosten                 -> real_total_costs
+
+Ablage im Projekt:
+    <app>/management/commands/import_real_costs.py
+    (zusätzlich leere __init__.py in management/ und management/commands/)
 
 Aufruf:
-    python manage.py import_real_costs pfad/zur/datei.xlsx
-    python manage.py import_real_costs datei.xlsx --sheet "Ist-Kosten" --dry-run
+    python manage.py import_real_costs pfad/zur/datei.csv
+    python manage.py import_real_costs daten.csv --delimiter ";" --encoding cp1252
+    python manage.py import_real_costs daten.csv --dry-run
 """
+
 from __future__ import annotations
 
-import re
+import csv
 from decimal import Decimal, InvalidOperation
 
 from django.core.management.base import BaseCommand, CommandError
@@ -15,187 +35,211 @@ from django.db import transaction
 
 from core.models import Application
 
-# Spaltenüberschrift (Excel)  ->  Modellfeld
-COLUMN_MAP = {
-    "PSP-Element": "psp_element",
-    "Materialkosten": "real_material_costs",
-    "Fremdleistungen": "real_external_services",
-    "Eigenleistungen": "real_internal_services",
-    "Ingenieurleistungen Dritte": "real_engineering_services",
-    "Materialkostenzuschlag": "real_material_surcharge",
-    "Investitionszuschläge": "real_investment_surcharge",
-    "Gesamtkosten": "real_total_costs",
+DECIMAL_FIELDS = {
+    "real_material_costs",
+    "real_external_services",
+    "real_internal_services",
+    "real_engineering_services",
+    "real_material_surcharge",
+    "real_investment_surcharge",
+    "real_total_costs",
 }
 
-# Felder, die als Decimal eingelesen werden (alle außer PSP)
-DECIMAL_FIELDS = {v for k, v in COLUMN_MAP.items() if k != "PSP-Element"}
 
-
-def parse_euro(value) -> Decimal | None:
+def classify_header(header: str) -> str | None:
     """
-    Wandelt einen Excel-Zellwert wie '2.800,00 €' oder 2800.0 in ein Decimal um.
-    Gibt None zurück, wenn die Zelle leer ist.
+    Ordnet eine CSV-Spaltenüberschrift einem Modellfeld zu.
+
+    Bewusst tolerant gegenüber Tippfehlern und abgeschnittenen Überschriften
+    (z. B. "Investitionszuschläg", "Materalkostenzuschla"): es wird nur auf
+    charakteristische Wortbestandteile geprüft.
     """
-    if value is None:
+    h = header.strip().lower()
+    if not h:
         return None
+    if "psp" in h:
+        return "psp_element"
 
-    # Bereits numerisch (openpyxl liefert oft float/int)
-    if isinstance(value, (int, float)):
-        return Decimal(str(value))
+    # Zuschlags-Spalten zuerst prüfen, da sie ebenfalls "material" enthalten.
+    has_surcharge = "zuschl" in h
+    if has_surcharge and "invest" in h:
+        return "real_investment_surcharge"
+    if has_surcharge and ("material" in h or "materal" in h):
+        return "real_material_surcharge"
 
-    text = str(value).strip()
-    if not text:
+    if "fremd" in h:
+        return "real_external_services"
+    if "eigen" in h:
+        return "real_internal_services"
+    if "ingeni" in h:  # Ingenieurleistungen / Ingenierleistungen
+        return "real_engineering_services"
+    if "gesamt" in h:
+        return "real_total_costs"
+    if "material" in h or "materal" in h:
+        return "real_material_costs"
+    return None
+
+
+def parse_german_decimal(raw: str | None) -> Decimal | None:
+    """
+    Wandelt einen Betrag im deutschen Format in ein Decimal um.
+
+        '2.800,00 €' -> Decimal('2800.00')
+        '0,00 €'     -> Decimal('0.00')
+        '' / '-'     -> None
+    """
+    if raw is None:
         return None
-
-    # Währungssymbole und Leerzeichen (inkl. geschütztem Leerzeichen) entfernen
-    text = text.replace("€", "").replace("\xa0", "").replace(" ", "")
-
-    # Deutsches Zahlenformat: 28.362,57  ->  28362.57
-    # Tausenderpunkte entfernen, Komma als Dezimaltrenner ersetzen
-    if "," in text:
-        text = text.replace(".", "").replace(",", ".")
-    # sonst: englisches Format / reine Ganzzahl -> unverändert lassen
-
-    # Negative Klammer-Notation o.ä. abfangen
-    text = re.sub(r"[^\d.\-]", "", text)
-
-    if not text or text in {"-", "."}:
+    value = raw.replace("€", "").replace("\xa0", "").strip()
+    if value in ("", "-"):
         return None
-
+    # Tausenderpunkt entfernen, Dezimalkomma in Punkt umwandeln.
+    value = value.replace(".", "").replace(",", ".")
     try:
-        return Decimal(text)
-    except InvalidOperation:
-        return None
-
-
-def normalize_psp(value) -> str:
-    """Normalisiert die PSP-Nummer (Leerzeichen weg, einheitlich vergleichbar)."""
-    if value is None:
-        return ""
-    return str(value).strip()
+        return Decimal(value)
+    except InvalidOperation as exc:
+        raise ValueError(f"Ungültiger Betrag: {raw!r}") from exc
 
 
 class Command(BaseCommand):
-    help = "Importiert Ist-Kosten aus einer Excel-Tabelle und ordnet sie per PSP-Element zu."
+    help = (
+        "Importiert Realkosten aus einer CSV-Datei und aktualisiert die "
+        "Application-Objekte (Zuordnung über das PSP-Element)."
+    )
 
     def add_arguments(self, parser):
-        parser.add_argument("excel_path", help="Pfad zur Excel-Datei (.xlsx)")
         parser.add_argument(
-            "--sheet",
-            default="Ist-Kosten",
-            help='Name des Tabellenblatts (Standard: "Ist-Kosten")',
+            "csv_path",
+            help="Pfad zur CSV-Datei.",
+        )
+        parser.add_argument(
+            "--delimiter",
+            default=";",
+            help="CSV-Trennzeichen (Standard: ';').",
+        )
+        parser.add_argument(
+            "--encoding",
+            default="utf-8-sig",
+            help="Datei-Encoding (Standard: 'utf-8-sig'; bei Excel-Exporten oft 'cp1252').",
         )
         parser.add_argument(
             "--dry-run",
             action="store_true",
-            help="Nur anzeigen, was passieren würde – keine Änderungen speichern.",
+            help="Nur prüfen und anzeigen, nichts in der Datenbank speichern.",
         )
 
     def handle(self, *args, **options):
-        try:
-            import openpyxl
-        except ImportError:
-            raise CommandError("openpyxl ist nicht installiert. Bitte: pip install openpyxl")
-
-        path = options["excel_path"]
-        sheet_name = options["sheet"]
+        path = options["csv_path"]
+        delimiter = options["delimiter"]
+        encoding = options["encoding"]
         dry_run = options["dry_run"]
 
+        # --- Datei öffnen und Header analysieren ----------------------------
         try:
-            wb = openpyxl.load_workbook(path, data_only=True)
-        except FileNotFoundError:
-            raise CommandError(f"Datei nicht gefunden: {path}")
+            handle = open(path, newline="", encoding=encoding)
+        except OSError as exc:
+            raise CommandError(f"Datei kann nicht geöffnet werden: {exc}")
 
-        if sheet_name not in wb.sheetnames:
-            raise CommandError(
-                f'Tabellenblatt "{sheet_name}" nicht gefunden. '
-                f"Verfügbar: {', '.join(wb.sheetnames)}"
-            )
+        with handle:
+            reader = csv.reader(handle, delimiter=delimiter)
+            try:
+                header = next(reader)
+            except StopIteration:
+                raise CommandError("Die CSV-Datei ist leer.")
 
-        ws = wb[sheet_name]
-        rows = ws.iter_rows(values_only=True)
+            col_to_field: dict[int, str] = {}
+            for idx, col in enumerate(header):
+                field = classify_header(col)
+                if field:
+                    col_to_field[idx] = field
 
-        # --- Kopfzeile lesen und Spaltenindizes bestimmen ---------------------
-        try:
-            header = next(rows)
-        except StopIteration:
-            raise CommandError("Das Tabellenblatt ist leer.")
-
-        header_clean = [str(h).strip() if h is not None else "" for h in header]
-        col_index = {}
-        for excel_col, field in COLUMN_MAP.items():
-            if excel_col in header_clean:
-                col_index[field] = header_clean.index(excel_col)
-            else:
-                self.stdout.write(
-                    self.style.WARNING(f'Spalte "{excel_col}" nicht gefunden – wird übersprungen.')
+            if "psp_element" not in col_to_field.values():
+                raise CommandError(
+                    "Keine PSP-Element-Spalte gefunden. Gelesene Überschriften: "
+                    + ", ".join(repr(c) for c in header)
                 )
 
-        if "psp_element" not in col_index:
-            raise CommandError('Pflichtspalte "PSP-Element" fehlt in der Kopfzeile.')
+            psp_idx = next(i for i, f in col_to_field.items() if f == "psp_element")
+            value_cols = {i: f for i, f in col_to_field.items() if f != "psp_element"}
 
-        # --- Datenzeilen verarbeiten -----------------------------------------
-        updated, not_found, skipped, ambiguous = 0, 0, 0, 0
+            self.stdout.write("Erkannte Spaltenzuordnung:")
+            for i, field in col_to_field.items():
+                self.stdout.write(f"  {header[i].strip()!r:40s} -> {field}")
+
+            rows = list(reader)
+
+        # --- Zeilen verarbeiten --------------------------------------------
+        updated = 0
+        not_found = 0
+        ambiguous = 0
+        errors = 0
 
         with transaction.atomic():
-            for row_nr, row in enumerate(rows, start=2):
-                psp = normalize_psp(row[col_index["psp_element"]])
-                if not psp:
-                    skipped += 1
+            for line_no, row in enumerate(rows, start=2):
+                if not row or all(cell.strip() == "" for cell in row):
                     continue
 
-                # Passenden Antrag suchen
+                psp = row[psp_idx].strip() if psp_idx < len(row) else ""
+                if not psp:
+                    continue
+
+                # Beträge parsen
+                try:
+                    values = {
+                        field: parse_german_decimal(row[i] if i < len(row) else "")
+                        for i, field in value_cols.items()
+                    }
+                except ValueError as exc:
+                    self.stderr.write(
+                        self.style.ERROR(f"Zeile {line_no} (PSP {psp}): {exc} – übersprungen.")
+                    )
+                    errors += 1
+                    continue
+
                 qs = Application.objects.filter(psp_element=psp)
                 count = qs.count()
 
                 if count == 0:
-                    not_found += 1
-                    self.stdout.write(
-                        self.style.WARNING(f"Zeile {row_nr}: Kein Antrag mit PSP '{psp}' gefunden.")
-                    )
-                    continue
-                if count > 1:
-                    ambiguous += 1
-                    self.stdout.write(
+                    self.stderr.write(
                         self.style.WARNING(
-                            f"Zeile {row_nr}: PSP '{psp}' ist mehrdeutig "
-                            f"({count} Treffer) – wird übersprungen."
+                            f"Zeile {line_no}: Kein Antrag mit PSP-Element {psp!r} – übersprungen."
                         )
                     )
+                    not_found += 1
                     continue
 
-                application = qs.first()
-
-                # Werte setzen
-                for field, idx in col_index.items():
-                    if field == "psp_element":
-                        continue
-                    raw = row[idx]
-                    value = parse_euro(raw) if field in DECIMAL_FIELDS else raw
-                    setattr(application, field, value)
-
-                if dry_run:
-                    self.stdout.write(
-                        f"[DRY-RUN] Würde Antrag #{application.pk} "
-                        f"(PSP {psp}) aktualisieren."
+                if count > 1:
+                    ambiguous += 1
+                    self.stderr.write(
+                        self.style.WARNING(
+                            f"Zeile {line_no}: {count} Anträge mit PSP-Element {psp!r} – alle werden aktualisiert."
+                        )
                     )
-                else:
-                    application.save(update_fields=list(DECIMAL_FIELDS) + ["updated_at"])
-                    self.stdout.write(
-                        self.style.SUCCESS(f"Zeile {row_nr}: Antrag #{application.pk} (PSP {psp}) aktualisiert.")
-                    )
-                updated += 1
+
+                for app in qs:
+                    for field, value in values.items():
+                        setattr(app, field, value)
+                    if not dry_run:
+                        app.save(update_fields=list(values.keys()) + ["updated_at"])
+                    updated += 1
 
             if dry_run:
-                # Änderungen verwerfen
+                # Alle Änderungen verwerfen.
                 transaction.set_rollback(True)
 
-        # --- Zusammenfassung --------------------------------------------------
+        # --- Zusammenfassung -----------------------------------------------
+        prefix = "[DRY-RUN] " if dry_run else ""
         self.stdout.write("")
-        self.stdout.write(self.style.HTTP_INFO("===== Zusammenfassung ====="))
-        self.stdout.write(f"  Aktualisiert : {updated}")
-        self.stdout.write(f"  Nicht gefunden: {not_found}")
-        self.stdout.write(f"  Mehrdeutig   : {ambiguous}")
-        self.stdout.write(f"  Übersprungen : {skipped}")
+        self.stdout.write(
+            self.style.SUCCESS(
+                f"{prefix}{updated} Antrag/Anträge aktualisiert."
+            )
+        )
+        if not_found:
+            self.stdout.write(self.style.WARNING(f"{not_found} PSP-Element(e) nicht gefunden."))
+        if ambiguous:
+            self.stdout.write(self.style.WARNING(f"{ambiguous} mehrdeutige PSP-Element(e)."))
+        if errors:
+            self.stdout.write(self.style.ERROR(f"{errors} Zeile(n) mit Parsing-Fehlern."))
         if dry_run:
-            self.stdout.write(self.style.WARNING("DRY-RUN – es wurde nichts gespeichert."))
+            self.stdout.write("Hinweis: Im Dry-Run wurde nichts gespeichert.")
