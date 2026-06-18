@@ -1,6 +1,5 @@
 """
 Django REST Framework – Serializers für Investitionsantrag.
-Streng basierend auf models(1).py (hand-edited, autoritativ).
 """
 
 from rest_framework import serializers
@@ -113,10 +112,3 @@ class ApplicationSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-
-
-class CostAggregationSerializer(serializers.Serializer):
-    """Serializer für aggregierte Kostensummen."""
-
-    count = serializers.IntegerField()
-    total_costs = serializers.DecimalField(max_digits=14, decimal_places=2)

@@ -1,6 +1,5 @@
 """
 Django REST Framework – FilterSet für Investitionsantrag.
-Streng basierend auf models(1).py (hand-edited, autoritativ).
 """
 
 import django_filters
