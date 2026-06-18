@@ -1,192 +1,215 @@
-# Django-DRF-Boilerplate
+# Gridminers Application Backend
 
-A powerful Django and Django REST Framework boilerplate project that provides a solid foundation for building web applications with essential features and best practices of class-based views.
-<br/>
-Minimal front-end has also been implemented in HTML, CSS and bootstrap for front-end testing.
-<hr/>
+Ein Django-REST-API Backend für Investitionsantragsverwaltung einer Infrastruktur-Firma (Leitungsbau/Kanalisation).
 
-## Features
+## Überblick
 
-- [Custom User Model](#custom-user-model)
-  - [Email-Based Authentication](#custom-user-model)
-- [Authentication via Social Account](#authentication-via-social-account)
-- [JWT Authentication](#jwt-authentication)
-- [Account Activation](#account-activation)
-- [Password Management](#password-management)
-  - [Reset Password via Email](#password-management)
-  - [Change Password using old password](#password-management)
-- [Profile Section](#profile-section)
-<hr/>
+Das Backend dient als Kern für eine Datenbank und API-Endpunkte zur Frontend- und Applikationsintegration. Basierend auf Django und Python verwaltet es Investitionsanträge für Bauprojekte mit detaillierter Kostenverfolgung (geplant vs. real).
 
-### Custom User Model
+## Funktionen
 
-The default user model has been customized to exclude username and enforce email-based authentication, and it can be further customized to one's need. Add following lines in `settings.py` to use the custom model.
+- **Investitionsantragsverwaltung**: Erfassung und Verwaltung von Bauprojektanträgen
+- **Kostenberechnung**: Geplante und reale Kosten mit automatischer Aggregation
+- **Filterbare API-Endpunkte**: Flexible Abfragen nach Jahr, Sparte, Asset, Gewerk, Straße
+- **Lookup-Tabellen**: Referenzdaten für Sparten, Assets, Gewerke, Straßen
+- **JSON-basierte Zahlungspläne**: Monatliche Zahlungsraten über 3 Jahre
 
-```py
-AUTH_USER_MODEL = 'users.CustomUser'
+## Datenmodell
 
-ACCOUNT_USER_MODEL_USERNAME_FIELD = None
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_USERNAME_REQUIRED = False
-ACCOUNT_AUTHENTICATION_METHOD = 'email'
+### Zentrale Tabellen
+
+#### Application (Antrag)
+- **Projektinformationen**: Titel, Geschäftsjahr, Ausführungszeitraum, Grund
+- **Klassifizierung**: Sparte, Asset, Gewerk, Straße, PSP-Element
+- **Technische Kennzahlen**: Leitungs-/Trassenlänge, Kosten pro Meter
+- **Kostenberechnung**:
+  - **Geplant**: Materialkosten, Fremdleistungen, Eigenleistungen, Ingenieurleistungen
+  - **Real**: Tatsächliche Kosten (optional)
+  - **Zuschläge**: Materialkosten- und Investitionszuschläge
+- **Zahlungsplan**: JSON-Feld für monatliche Raten
+
+#### Lookup-Tabellen
+- **Division (Sparte)**: Organisatorische Einheit
+- **Asset**: Technisches Betriebsmittel/Infrastrukturobjekt
+- **Trade (Gewerk)**: Spezialisierung (One-to-One mit Asset)
+- **Street**: Straßeninformationen
+
+### Beziehungen
+- Jeder `Application` gehört zu einer `Division`, einem `Asset`, einem `Trade` und einer `Street`
+- `Trade` hat eine One-to-One-Beziehung mit `Asset`
+
+## API-Endpunkte
+
+### Haupt-Endpunkte
+- `GET /api/applications/` - Liste aller Anträge (filterbar)
+- `GET /api/applications/{id}/` - Detail eines Antrags
+
+### Aggregierte Kostenberechnung
+- `GET /api/planned_costs/` - Gesamtsumme geplanter Kosten
+- `GET /api/real_costs/` - Gesamtsumme realer Kosten
+
+### Filteroptionen (für beide Kosten-Endpunkte)
+- `/year/{year}/` - Nach Geschäftsjahr
+- `/street/{id}/` - Nach Straße
+- `/division/{id}/` - Nach Sparte
+- `/asset/{id}/` - Nach Asset
+- `/trade/{id}/` - Nach Gewerk
+- `/street/{id}/{year}/` - Kombinationen
+
+### Lookup-Tabellen
+- `GET /api/streets/` - Alle Straßen
+- `GET /api/divisions/` - Alle Sparten
+- `GET /api/assets/` - Alle Assets
+- `GET /api/trades/` - Alle Gewerke
+
+## Technologie-Stack
+
+### Backend
+- **Framework**: Django 5.2 + Django REST Framework 3.17.1
+- **Datenbank**: PostgreSQL (Production) / SQLite (Development)
+- **Filterung**: django-filter 25.2
+- **Treiber**: psycopg 3.3.4 (PostgreSQL)
+
+### Frontend (separat)
+- **Framework**: Angular
+- **Location**: `../ui/` Verzeichnis
+
+## Projektstruktur
+
 ```
-<hr/>
-
-### Authentication via Social Account
-
-For authentication via social accounts (Google and GitHub in this project) `django-allauth` is used. Add following apps in `INSTALLED_APPS` in `settings.py` to use `django-allauth` in your project and specify authentication backend.
-
-```py
-INSTALLED_APPS = [
-    # Other apps
-    'allauth',
-    'allauth.account',
-    'allauth.socialaccount',
-    'allauth.socialaccount.providers.google',
-    'allauth.socialaccount.providers.github',
-]
-
-AUTHENTICATION_BACKENDS = [
-    'django.contrib.auth.backends.ModelBackend',
-    'allauth.account.auth_backends.AuthenticationBackend'
-]
-```
-
-Define the scope and login redirect URL by adding following lines in `settings.py`.
-
-```py
-SOCIAL_ACCOUNT_PROVIDERS = {
-    'google': {
-        'SCOPE': [
-            'profile',
-            'email'
-        ],
-        'AUTH_PARAMS': {
-            'access_type': 'online'
-        }
-    }
-}
-
-LOGIN_REDIRECT_URL = '/'
-```
-
-To connect social account of users already signed-up with the specified email rather than creating a new user, a custom adapter is used. Specify the path by adding following line in `settings.py`.
-
-```py
-SOCIALACCOUNT_ADAPTER = 'users.allauth.adapters.CustomSocialAccountAdapter'
-```
-<hr/>
-
-### JWT Authentication
-
-Simple JWT has been used for JSON Web Token authentication backend for the Django REST Framework.
-
-```py
-INSTALLED_APPS = [
-    # Other apps
-    'rest_framework_simplejwt',
-]
-
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ),
-}
-```
-
-Specify the lifetime of the tokens.
-
-```py
-from datetime import timedelta
-
-SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
-}
-```
-<hr/>
-
-### Account Activation
-
-Activation via email has been integrated in the project. Set up `SMTP` server by adding following lines in `settings.py` to send email.
-
-```py
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'email host user'
-EMAIL_HOST_PASSWORD = 'email host password'
-```
-<hr/>
-
-### Password Management
-
-- Reset Password via Email
-
-A reset link is sent to the user email address using the same `SMTP` server that we set up in the [previous step](#account-activation). Specify the duration of the link by adding following line in `settings.py`.
-
-```py
-PASSWORD_RESET_TIMEOUT = 7200  # 2 hour
+backend/
+├── backend/                    # Hauptprojekt
+│   ├── settings/              # Konfiguration
+│   │   ├── common.py         # Gemeinsame Einstellungen
+│   │   ├── dev.py            # Development-Einstellungen
+│   │   └── prod.py           # Production-Einstellungen
+│   ├── urls.py               # Haupt-URL-Konfiguration
+├── core/                      # Haupt-Anwendung
+│   ├── models.py             # Datenbankmodelle
+│   ├── views.py              # API-Views
+│   ├── serializers.py        # DRF-Serializer
+│   ├── filters.py            # Filter für API
+│   ├── urls.py               # App-URLs
+│   └── migrations/           # Datenbank-Migrationen
+├── manage.py                 # Django Management
+├── requirements.txt          # Python-Abhängigkeiten
+└── db.sqlite3               # SQLite-Datenbank (Dev)
 ```
 
-- Change Password using Old Password
+## Geschäftslogik
 
-Changing the user password using old password has been implemented as well.
-<hr/>
-
-### Profile Section
-
-User Profile section has also been implemented where users can edit their profile or look at others' profile via user handle.
-<hr/>
-
-## Connect PostgreSQL
-
-We'll be using PostgreSQL for database management instead of django's built-in sqlite3.
-
-```py
-DATABASES = {
-   'default': {
-       'ENGINE': 'django.db.backends.postgresql',
-       'NAME': 'database name',
-       'USER': 'user associated with db',
-       'PASSWORD': 'password',
-       'HOST': 'host',
-       'PORT': 'port',
-   }
-}
+### Kostenberechnung (geplant)
 ```
-<hr/>
-
-## Getting Started
-
-Follow these steps to set up and run the project locally:
-
-- Clone the repo
-
-```commandline
-git clone https://github.com/Fahad-Habib/Django-DRF-Boilerplate.git
-cd Django-DRF-Boilerplate
+1. Zwischenkosten = Materialkosten + Fremdleistungen + Eigenleistungen + Ingenieurleistungen
+2. Materialkostenzuschlag = Materialkosten × Materialzuschlagssatz
+3. Investitionszuschlag = Zwischenkosten × Investitionszuschlagssatz
+4. Gesamtzuschläge = Materialkostenzuschlag + Investitionszuschlag
+5. Gesamtkosten = Zwischenkosten + Gesamtzuschläge
 ```
 
-- Install requirements
+### Filterung
+- Apps: Nach Geschäftsjahr, Sparte, Asset, Gewerk, Straße
+- Aggregation: Kostensummen nach den gleichen Kriterien
 
-```commandline
-python -m pip install -r requirements.txt
-```
+## Installation
 
-- Set up environment
+### Voraussetzungen
+- Python 3.8+
+- PostgreSQL (für Production)
+- pip (Python Package Manager)
 
-Create a `.env` file in `boilerplate` directory following `sample.env`
+### Entwicklungsumgebung
+```bash
+# Repository klonen
+git clone <repository-url>
+cd application/backend
 
-- Run migrations
+# Virtuelle Umgebung erstellen
+python -m venv venv
+# Windows:
+venv\Scripts\activate
+# Linux/Mac:
+source venv/bin/activate
 
-```commandline
+# Abhängigkeiten installieren
+pip install -r requirements.txt
+
+# Datenbank-Migrationen anwenden
 python manage.py migrate
-```
 
-- Start the server
-
-```commandline
+# Entwicklungsserver starten
 python manage.py runserver
 ```
+
+### Production Setup
+1. `backend/settings/prod.py` anpassen
+2. Environment-Variablen setzen:
+   - `SECRET_KEY`
+   - `DATABASE_URL`
+   - `ALLOWED_HOSTS`
+3. PostgreSQL-Datenbank einrichten
+4. Statische Dateien sammeln: `python manage.py collectstatic`
+
+## Aktuelle Status & To-Do's
+
+### ✅ Implementiert
+- ✅ Datenbankmodelle mit Beziehungen
+- ✅ Read-Only API-Endpunkte
+- ✅ Kosten-Aggregation
+- ✅ Mehrschichtige Filterung
+- ✅ Settings-Separation (Dev/Prod)
+
+### 🔄 In Arbeit
+- 🔄 API-Authentifizierung
+- 🔄 CRUD-Operationen
+- 🔄 Unit-Tests
+- 🔄 Frontend-Integration
+
+### ❌ Fehlt
+- ❌ Authentifizierung/Autorisierung
+- ❌ Create/Update/Delete Endpoints
+- ❌ Geschäftslogik-Implementierung
+- ❌ Test-Coverage
+- ❌ CORS-Konfiguration
+- ❌ API-Dokumentation
+
+## Sicherheitshinweise
+
+**Aktuelle Einschränkungen:**
+- Keine API-Authentifizierung – API ist öffentlich zugänglich
+- Hardcoded Secrets in Development Settings
+- Keine CORS-Konfiguration – Frontend-Integration blockiert
+
+**Empfohlene Maßnahmen vor Produktionseinsatz:**
+1. JWT- oder Token-basierte Authentifizierung implementieren
+2. SECRET_KEY über Environment-Variablen bereitstellen
+3. CORS für Frontend-Domains konfigurieren
+4. Rate Limiting implementieren
+
+## Entwicklung
+
+### Code-Konventionen
+- **Models**: Deutsche Feldnamen mit deutschen Verbosenamen
+- **Serializers**: Vollständige Felder-Expose
+- **Views**: DRF Generic Views mit Mixins
+- **Filter**: django-filter für API-Filterung
+
+### Commands
+```bash
+# Migrationen erstellen/anwenden
+python manage.py makemigrations
+python manage.py migrate
+
+# Superuser erstellen
+python manage.py createsuperuser
+
+# Test-Server (Development)
+python manage.py runserver
+
+# Test-Server (Production-Settings)
+python manage.py runserver --settings=backend.settings.prod
+```
+
+## Lizenz
+
+Proprietär – Gridminers GmbH
