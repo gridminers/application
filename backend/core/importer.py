@@ -1,7 +1,12 @@
 """
 Importer-Service.
 
-Orchestriert: Deduplizierung -> Parsen -> Fremdschlüssel auflösen -> Persistieren.
+Orchestriert: Deduplizierung -> LLM-Veredelung (Refining/Sanitizing/Enriching)
+-> Parsen -> Fremdschlüssel auflösen -> Persistieren. Der Veredelungsschritt
+bringt rohe Exporte in die kanonischen Formate, die die ``ValueParser``
+erwarten, sodass Anträge mit kleinen Formatproblemen nicht mehr abgelehnt
+werden (siehe ``refiner.py``).
+
 Kennt keine HTTP-Details (das macht die View); dadurch ist der Service auch aus
 Management-Commands oder Tasks heraus nutzbar.
 """
@@ -28,6 +33,7 @@ from .field_mapping import (
 # Importe an die tatsächliche App anpassen.
 from .models import Application, Asset, Division, Street, Trade
 from .parsers import ParserRegistry, default_registry
+from .refiner import DocumentRefiner, default_refiner
 from .street_matching import RapidFuzzStreetMatcher, StreetMatcher
 
 _PERCENT_IN_LABEL = re.compile(r"\(\s*(\d+(?:[.,]\d+)?)\s*%\s*\)")
@@ -51,22 +57,40 @@ class ApplicationImporter:
             self,
             parser_registry: Optional[ParserRegistry] = None,
             street_matcher: Optional[StreetMatcher] = None,
+            refiner: Optional[DocumentRefiner] = None,
     ) -> None:
         self._parsers = parser_registry or default_registry()
         self._street_matcher = street_matcher or RapidFuzzStreetMatcher()
+        self._refiner = refiner or default_refiner()
 
-    @transaction.atomic
     def import_export(self, export: Mapping[str, Any]) -> Application:
         """Importiert einen Export im neuen Parser-Format.
 
+        Ablauf: Deduplizierung -> LLM-Veredelung (Refining/Sanitizing/
+        Enriching) -> Parsen -> Fremdschlüssel -> Persistieren.
+
         Erwartet ein flaches ``targets``-Mapping (Label -> Rohwert/``null``).
+        Die Prüfsumme wird aus den *Rohdaten* abgeleitet, sodass bereits
+        importierte Extraktionen gar nicht erst durch das LLM geschickt werden.
         Wirft ``DuplicateDocumentError`` bei einem bereits importierten Dokument.
         """
-        targets = export.get("targets", {})
-        sha256 = self._compute_sha256(export.get("source_file", ""), targets)
+        source_file = export.get("source_file", "")
+        raw_targets = export.get("targets", {})
+        sha256 = self._compute_sha256(source_file, raw_targets)
         if Application.objects.filter(sha256=sha256).exists():
             raise DuplicateDocumentError(sha256)
 
+        # Veredelung außerhalb der DB-Transaktion (externer Netzwerk-Call).
+        refined_targets = self._refiner.refine(
+            raw_targets, list(export.get("warnings", []) or [])
+        )
+        return self._persist(sha256, refined_targets)
+
+    @transaction.atomic
+    def _persist(
+            self, sha256: str, targets: Mapping[str, Any]
+    ) -> Application:
+        """Parst die (veredelten) ``targets`` und legt die ``Application`` an."""
         fields_by_label = self._fields_from_targets(targets)
 
         data: dict[str, Any] = {"sha256": sha256}
