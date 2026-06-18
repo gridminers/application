@@ -12,11 +12,13 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.messages',
     'rest_framework',
+    'corsheaders',
     'core',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
