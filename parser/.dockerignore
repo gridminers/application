@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+.env.example
+dump/
+processed_files/
+.git/
+.gitignore
+Containerfile
+.dockerignore

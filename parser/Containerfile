@@ -1,0 +1,21 @@
+FROM python:3.12-slim
+
+# Don't write .pyc files, keep stdout unbuffered for live container logs
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
+# Install dependencies first for better layer caching
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Application source only (data and secrets stay out of the image)
+COPY main.py prompts.py schema.py ./
+
+# Data directories as mountpoints; created so the app finds them even if unmounted
+RUN mkdir -p dump processed_files
+VOLUME ["/app/dump", "/app/processed_files"]
+
+# Plain entrypoint — pass --watch / --interval at runtime
+ENTRYPOINT ["python", "main.py"]
