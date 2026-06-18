@@ -12,7 +12,7 @@
 
 [![Backend](https://img.shields.io/badge/Backend-Django%205.2%20%C2%B7%20DRF-092E20?logo=django&logoColor=white)](backend/README.md)
 [![Frontend](https://img.shields.io/badge/Frontend-Angular%2022-DD0031?logo=angular&logoColor=white)](ui/README.md)
-[![Parser](https://img.shields.io/badge/Parser-Python%20%C2%B7%20Azure%20OpenAI-3776AB?logo=python&logoColor=white)](parser/)
+[![Parser](https://img.shields.io/badge/Parser-Python%20%C2%B7%20Azure%20OpenAI-3776AB?logo=python&logoColor=white)](parser/README.md)
 [![Database](https://img.shields.io/badge/Database-PostgreSQL%2016-4169E1?logo=postgresql&logoColor=white)](#technologie-stack)
 [![Docker](https://img.shields.io/badge/Deploy-Docker%20Compose-2496ED?logo=docker&logoColor=white)](#docker-empfohlen)
 
