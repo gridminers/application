@@ -39,6 +39,7 @@ TEXT_LAYER_MIN_CHARS = 20   # ignore near-empty text layers
 REQUEST_TIMEOUT = 180       # seconds
 MAX_RETRIES = 4             # attempts on 429 / 5xx
 BACKOFF_BASE = 2.0          # seconds, exponential
+POST_TIMEOUT = 30           # seconds, best-effort submit to C&C backend
 
 # --- Watch mode tuning ------------------------------------------------------
 WATCH_INTERVAL = 5.0        # seconds between dump-dir polls
@@ -157,6 +158,9 @@ def load_config() -> dict:
     api_key = os.environ.get("AZURE_OPENAI_API_KEY", "").strip()
     if not api_key:
         sys.exit("error: AZURE_OPENAI_API_KEY is not set (see .env.example)")
+    import_url = os.environ.get("IMPORT_API_URL", "").strip()
+    if not import_url:
+        sys.exit("error: IMPORT_API_URL is not set (see .env.example)")
     return {
         "api_key": api_key,
         "model": os.environ.get("AZURE_OPENAI_MODEL", "gpt-5.4").strip(),
@@ -167,7 +171,18 @@ def load_config() -> dict:
         "api_version": os.environ.get(
             "AZURE_OPENAI_API_VERSION", "2025-04-01-preview"
         ).strip(),
+        "import_url": import_url,
     }
+
+
+def post_result(out: dict, cfg: dict) -> None:
+    """Best-effort POST of the result JSON to the C&C backend. Logs status."""
+    try:
+        resp = requests.post(cfg["import_url"], json=out, timeout=POST_TIMEOUT)
+    except requests.RequestException as exc:
+        print(f"[post]  submit failed: {exc}")
+        return
+    print(f"[post]  submit status {resp.status_code}")
 
 
 def is_stable(path: Path) -> bool:
@@ -228,6 +243,7 @@ def process_pdf(path: Path, manifest: dict[str, str], cfg: dict) -> str:
     manifest[digest] = out_name
     save_manifest(manifest)
     print(f"[ok]   {name} -> {out_name}")
+    post_result(out, cfg)
     return "ok"
 
 
