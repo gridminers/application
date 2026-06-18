@@ -8,6 +8,8 @@ Management-Commands oder Tasks heraus nutzbar.
 
 from __future__ import annotations
 
+import hashlib
+import json
 import re
 from decimal import Decimal
 from typing import Any, Mapping, Optional
@@ -21,6 +23,7 @@ from .field_mapping import (
     LABEL_PAYMENT_SCHEDULE,
     SCALAR_FIELD_MAP,
     SURCHARGE_RULES,
+    field_type_for_label,
 )
 # Importe an die tatsächliche App anpassen.
 from .models import Application, Asset, Division, Street, Trade
@@ -54,12 +57,17 @@ class ApplicationImporter:
 
     @transaction.atomic
     def import_export(self, export: Mapping[str, Any]) -> Application:
-        """Importiert einen Export. Wirft ``DuplicateDocumentError`` bei Duplikat."""
-        sha256 = export["sha256"]
+        """Importiert einen Export im neuen Parser-Format.
+
+        Erwartet ein flaches ``targets``-Mapping (Label -> Rohwert/``null``).
+        Wirft ``DuplicateDocumentError`` bei einem bereits importierten Dokument.
+        """
+        targets = export.get("targets", {})
+        sha256 = self._compute_sha256(export.get("source_file", ""), targets)
         if Application.objects.filter(sha256=sha256).exists():
             raise DuplicateDocumentError(sha256)
 
-        fields_by_label = {field["label"]: field for field in export.get("fields", [])}
+        fields_by_label = self._fields_from_targets(targets)
 
         data: dict[str, Any] = {"sha256": sha256}
         self._apply_scalar_fields(fields_by_label, data)
@@ -69,6 +77,47 @@ class ApplicationImporter:
         self._resolve_foreign_keys(fields_by_label, data)
 
         return Application.objects.create(**data)
+
+    # -- Eingabe-Normalisierung ----------------------------------------------
+
+    @staticmethod
+    def _compute_sha256(source_file: str, targets: Mapping[str, Any]) -> str:
+        """Leitet eine deterministische Prüfsumme aus dem Export ab.
+
+        Das neue Format liefert keine Prüfsumme mit; identische Extraktionen
+        (gleicher Dateiname + gleiche ``targets``) ergeben denselben Hash und
+        werden so weiterhin dedupliziert.
+        """
+        canonical = json.dumps(
+            {"source_file": source_file, "targets": dict(targets)},
+            sort_keys=True,
+            ensure_ascii=False,
+        )
+        return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+    @staticmethod
+    def _fields_from_targets(
+            targets: Mapping[str, Any]
+    ) -> dict[str, dict[str, Any]]:
+        """Wandelt das flache ``targets``-Mapping in Feld-Datensätze um.
+
+        Pro Label wird der passende Parser-Typ ermittelt, sodass die bestehende
+        Parser-Infrastruktur unverändert genutzt werden kann. ``null`` oder
+        leere Werte werden übersprungen.
+        """
+        fields: dict[str, dict[str, Any]] = {}
+        for label, value in targets.items():
+            if value is None:
+                continue
+            normalized = str(value).strip()
+            if not normalized:
+                continue
+            fields[label] = {
+                "label": label,
+                "type": field_type_for_label(label),
+                "value_normalized": normalized,
+            }
+        return fields
 
     # -- Teilschritte --------------------------------------------------------
 

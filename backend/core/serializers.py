@@ -8,22 +8,24 @@ from rest_framework import serializers
 from .models import Application, Asset, Division, Street, Trade
 
 
-class ExportFieldSerializer(serializers.Serializer):
-    label = serializers.CharField()
-    type = serializers.CharField()
-    value_normalized = serializers.CharField(
-        required=False, allow_blank=True, allow_null=True
-    )
-    sanitized_value = serializers.CharField(
-        required=False, allow_blank=True, allow_null=True
-    )
-
-
 class ExportSerializer(serializers.Serializer):
-    sha256 = serializers.CharField(max_length=64)
-    document_id = serializers.CharField(required=False)
-    filename = serializers.CharField(required=False)
-    fields = ExportFieldSerializer(many=True)
+    """Parser-Export im neuen Format.
+
+    Der Parser postet pro erfolgreich verarbeiteter PDF ein flaches
+    ``targets``-Mapping (Label -> Rohwert oder ``null``) sowie den Dateinamen
+    und optionale Warnungen. Eine Prüfsumme ist nicht enthalten; sie wird im
+    Importer deterministisch aus ``source_file`` und ``targets`` abgeleitet.
+    """
+
+    source_file = serializers.CharField()
+    targets = serializers.DictField(
+        child=serializers.CharField(allow_blank=True, allow_null=True),
+    )
+    warnings = serializers.ListField(
+        child=serializers.CharField(allow_blank=True),
+        required=False,
+        default=list,
+    )
 
 
 class StreetSerializer(serializers.ModelSerializer):

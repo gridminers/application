@@ -41,5 +41,23 @@ services:
       - backend
     restart: unless-stopped
 
+  parser:
+    build:
+      context: ./parser
+      dockerfile: Containerfile
+    command: ["--watch"]
+    env_file:
+      - ./parser/.env
+    environment:
+      # Override the .env value so the parser reaches the backend over the
+      # internal Docker network instead of localhost.
+      IMPORT_API_URL: http://backend:8000/api/applications/import/
+    volumes:
+      - ./parser/dump:/app/dump
+      - ./parser/processed_files:/app/processed_files
+    depends_on:
+      - backend
+    restart: unless-stopped
+
 volumes:
   postgres_data:

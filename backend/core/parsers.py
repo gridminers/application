@@ -109,13 +109,14 @@ class DateRangeParser(ValueParser):
 class PaymentPlanParser(ValueParser):
     """Zahlungsplan -> Liste aus {'year', 'share', 'amount'}.
 
-    ``share`` ist ein Bruch (50 % -> 0.5), ``amount`` ein Decimal-String
-    (JSON-serialisierbar).
+    Neues Parser-Format je Eintrag: ``2024: 100 % / 6.956 €`` (Jahr, Anteil,
+    Betrag), Einträge durch ``;`` getrennt. ``share`` ist ein Bruch
+    (100 % -> 1.0), ``amount`` ein Decimal-String (JSON-serialisierbar).
     """
 
     _ENTRY = re.compile(
-        r"(?P<year>\d{4})\s*:\s*(?P<amount>[\d.,]+)\s*€\s*"
-        r"\(\s*(?P<share>\d+)\s*%\s*\)"
+        r"(?P<year>\d{4})\s*:\s*(?P<share>\d+)\s*%\s*/\s*"
+        r"(?P<amount>[\d.,]+)\s*€"
     )
 
     def parse(self, field: Mapping[str, Any]) -> list[dict[str, Any]]:
