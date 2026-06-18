@@ -20,6 +20,8 @@ interface Feature {
 export class Landing {
   private readonly data = inject(ProjectData);
 
+  readonly loading = this.data.loading;
+  readonly error = this.data.error;
   readonly projectCount = this.data.projectCount;
   readonly totalBudget = this.data.totalBudget;
   readonly sparteCount = computed(

@@ -33,6 +33,17 @@ export const MOCK_PROJECTS: readonly Project[] = [
       zwischensummeZuschlaege: 318972,
       gesamtkosten: 1323972,
     },
+    realKosten: {
+      materialkosten: 405000,
+      fremdleistungen: 332000,
+      eigenleistungen: 171000,
+      ingenieurleistungDritte: 98000,
+      zwischensummeKosten: 1006000,
+      materialkostenzuschlag: { prozent: 17, betrag: 68850 },
+      investitionszuschlag: { prozent: 23, betrag: 247196 },
+      zwischensummeZuschlaege: 316046,
+      gesamtkosten: 1322046,
+    },
     zahlungsplan: [
       { year: 2024, amount: 350000 },
       { year: 2025, amount: 700000 },
@@ -62,6 +73,7 @@ export const MOCK_PROJECTS: readonly Project[] = [
       zwischensummeZuschlaege: 206166,
       gesamtkosten: 866166,
     },
+    realKosten: null,
     zahlungsplan: [
       { year: 2024, amount: 400000 },
       { year: 2025, amount: 466166 },
@@ -89,6 +101,17 @@ export const MOCK_PROJECTS: readonly Project[] = [
       investitionszuschlag: { prozent: 23, betrag: 286741 },
       zwischensummeZuschlaege: 373441,
       gesamtkosten: 1533441,
+    },
+    realKosten: {
+      materialkosten: 528000,
+      fremdleistungen: 401000,
+      eigenleistungen: 205000,
+      ingenieurleistungDritte: 64000,
+      zwischensummeKosten: 1198000,
+      materialkostenzuschlag: { prozent: 17, betrag: 89760 },
+      investitionszuschlag: { prozent: 23, betrag: 296259 },
+      zwischensummeZuschlaege: 386019,
+      gesamtkosten: 1584019,
     },
     zahlungsplan: [
       { year: 2025, amount: 766720 },
@@ -118,6 +141,7 @@ export const MOCK_PROJECTS: readonly Project[] = [
       zwischensummeZuschlaege: 157238,
       gesamtkosten: 677238,
     },
+    realKosten: null,
     zahlungsplan: [
       { year: 2025, amount: 360000 },
       { year: 2026, amount: 317238 },
@@ -146,6 +170,7 @@ export const MOCK_PROJECTS: readonly Project[] = [
       zwischensummeZuschlaege: 481124,
       gesamtkosten: 1991124,
     },
+    realKosten: null,
     zahlungsplan: [
       { year: 2025, amount: 600000 },
       { year: 2026, amount: 900000 },
@@ -175,6 +200,7 @@ export const MOCK_PROJECTS: readonly Project[] = [
       zwischensummeZuschlaege: 221430,
       gesamtkosten: 911430,
     },
+    realKosten: null,
     zahlungsplan: [
       { year: 2025, amount: 450000 },
       { year: 2026, amount: 461430 },
@@ -203,6 +229,7 @@ export const MOCK_PROJECTS: readonly Project[] = [
       zwischensummeZuschlaege: 279558,
       gesamtkosten: 1149558,
     },
+    realKosten: null,
     zahlungsplan: [
       { year: 2026, amount: 649558 },
       { year: 2027, amount: 500000 },
@@ -236,6 +263,7 @@ export const MOCK_PROJECTS: readonly Project[] = [
       zwischensummeZuschlaege: 11383.75,
       gesamtkosten: 51688.91,
     },
+    realKosten: null,
     zahlungsplan: [
       { year: 2025, amount: 0 },
       { year: 2026, amount: 51688.91 },

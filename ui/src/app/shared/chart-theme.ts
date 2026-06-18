@@ -7,6 +7,7 @@ export const SPARTE_COLORS: Record<Sparte, string> = {
   Wasser: '#1c7fd6',
   Infotechnik: '#7a4fd0',
   Fernwaerme: '#c0392b',
+  Sonstige: '#8a8a8a',
 };
 
 /**
@@ -20,6 +21,7 @@ export const STREET_COLORS: Record<Sparte, string> = {
   Fernwaerme: '#ff3b30', // red
   Wasser: '#2b9bff', // blue
   Infotechnik: '#ff3bd4', // magenta
+  Sonstige: '#9aa0a6', // neutral grey
 };
 
 /**

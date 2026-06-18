@@ -31,6 +31,8 @@ export interface Project {
   pspElement: string;
   /** Kostenschätzung (cost estimate) */
   kosten: CostBreakdown;
+  /** Realized cost breakdown (Ist), or null when no actuals reported yet. */
+  realKosten: CostBreakdown | null;
   /** Zahlungsplan nach Jahr (payment plan by year) */
   zahlungsplan: PaymentPlanEntry[];
   /** Leitungsmeter — line / trench length in metres */

@@ -16,6 +16,7 @@ import { aggregateStreetSparten, ProjectData } from '../../../../core/services/p
 import { projectStreet } from '../../../../core/services/project-derivations';
 import { StreetGeometryStore } from '../../../../core/services/street-geometry-store';
 import { STREET_COLORS } from '../../../../shared/chart-theme';
+import { DataStatus } from '../../../../shared/data-status/data-status';
 
 /** Geographic center of Braunschweig. */
 const BRAUNSCHWEIG_CENTER: L.LatLngTuple = [52.2689, 10.5268];
@@ -50,7 +51,7 @@ interface LocatedStreet {
 /** OpenStreetMap view of Braunschweig, themed to match the app. */
 @Component({
   selector: 'app-map-page',
-  imports: [],
+  imports: [DataStatus],
   templateUrl: './map-page.html',
   styleUrl: './map-page.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

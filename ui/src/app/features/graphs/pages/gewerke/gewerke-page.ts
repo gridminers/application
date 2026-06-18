@@ -8,6 +8,7 @@ import {
 } from '../../../../core/services/project-data';
 import { isGewerk } from '../../../../core/services/project-derivations';
 import { ChartCard } from '../../../../shared/chart-card/chart-card';
+import { DataStatus } from '../../../../shared/data-status/data-status';
 import { GraphScroll } from '../../../../shared/graph-scroll/graph-scroll';
 import { EigenFremdComparison } from '../../charts/eigen-fremd-comparison/eigen-fremd-comparison';
 import { ExpendituresByYear } from '../../charts/expenditures-by-year/expenditures-by-year';
@@ -22,6 +23,7 @@ import { createGraphFilterModel } from '../../filter-bar/graph-filter-model';
     GraphFilterBar,
     GraphScroll,
     ChartCard,
+    DataStatus,
     ExpendituresByYear,
     GewerkeBreakdown,
     EigenFremdComparison,

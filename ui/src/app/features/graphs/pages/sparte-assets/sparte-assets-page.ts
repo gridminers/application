@@ -11,6 +11,7 @@ import {
 } from '../../../../core/services/project-data';
 import { ChartCard } from '../../../../shared/chart-card/chart-card';
 import { sparteLabel } from '../../../../shared/chart-theme';
+import { DataStatus } from '../../../../shared/data-status/data-status';
 import { GraphScroll } from '../../../../shared/graph-scroll/graph-scroll';
 import { BudgetByAsset } from '../../charts/budget-by-asset/budget-by-asset';
 import { BudgetByDivision } from '../../charts/budget-by-division/budget-by-division';
@@ -28,6 +29,7 @@ import { createGraphFilterModel } from '../../filter-bar/graph-filter-model';
     GraphFilterBar,
     GraphScroll,
     ChartCard,
+    DataStatus,
     ExpendituresByYear,
     BudgetByDivision,
     BudgetByAsset,

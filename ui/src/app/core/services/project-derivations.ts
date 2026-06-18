@@ -2,8 +2,8 @@ import { Project } from '../models/project';
 import { Sparte } from '../models/sparte';
 
 /**
- * Derivations that synthesise concepts not yet present in the source data
- * (trade/Gewerk, actual costs). Everything here is computed from the existing
+ * Derivations that synthesise concepts not yet present as plain fields
+ * (trade/Gewerk, street fallback). Everything here is computed from the existing
  * {@link Project} fields and is fully deterministic, so charts stay stable
  * between renders. When the backend later supplies real values these helpers
  * can be dropped in favour of plain field reads.
@@ -40,45 +40,6 @@ export function isGewerk(asset: string): boolean {
  */
 export function projectGewerk(p: Project): string | null {
   return isGewerk(p.asset) ? p.asset : null;
-}
-
-/* ------------------------------------------------------------------ *
- * Ist-Kosten (actual costs)
- * ------------------------------------------------------------------ */
-
-/**
- * Last fiscal year that is considered "closed" and therefore has actual costs.
- * Mirrors the application's reference year; payment-plan entries beyond this
- * have no Ist value yet.
- */
-export const LATEST_ACTUALS_YEAR = 2026;
-
-/** Tiny deterministic string hash → float in [0, 1). */
-function hash01(seed: string): number {
-  let h = 2166136261;
-  for (let i = 0; i < seed.length; i++) {
-    h ^= seed.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  // Map the unsigned 32-bit value into [0, 1).
-  return ((h >>> 0) % 100000) / 100000;
-}
-
-/**
- * Synthesise the actual amount realised for a planned payment-plan entry.
- * Deterministically varies the plan by roughly -10 % … +18 %. Returns `null`
- * for years that have not closed yet (no actuals available).
- */
-export function actualPaymentForYear(
-  p: Project,
-  year: number,
-  plannedAmount: number,
-): number | null {
-  if (year > LATEST_ACTUALS_YEAR) {
-    return null;
-  }
-  const factor = 0.9 + hash01(`${p.id}:${year}`) * 0.28;
-  return Math.round(plannedAmount * factor);
 }
 
 /* ------------------------------------------------------------------ *

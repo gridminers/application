@@ -6,6 +6,7 @@ import { ProjectData } from '../../../../core/services/project-data';
 import { projectStreet } from '../../../../core/services/project-derivations';
 import { ChartCard } from '../../../../shared/chart-card/chart-card';
 import { sparteLabel, STREET_COLORS } from '../../../../shared/chart-theme';
+import { DataStatus } from '../../../../shared/data-status/data-status';
 import { GraphScroll } from '../../../../shared/graph-scroll/graph-scroll';
 import {
   StreetProjects,
@@ -17,7 +18,7 @@ import { createGraphFilterModel } from '../../filter-bar/graph-filter-model';
 /** Straßendetails: number of projects for a single selected street. */
 @Component({
   selector: 'app-street-details-page',
-  imports: [GraphFilterBar, GraphScroll, ChartCard, StreetProjects],
+  imports: [GraphFilterBar, GraphScroll, ChartCard, DataStatus, StreetProjects],
   templateUrl: './street-details-page.html',
   styleUrl: './street-details-page.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

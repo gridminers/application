@@ -15,18 +15,28 @@
       <a class="btn btn--ghost" href="#features">Mehr erfahren</a>
     </div>
 
-    <dl class="stats" aria-label="Kennzahlen">
+    @if (error()) {
+      <p class="hero__notice" role="status">{{ error() }}</p>
+    }
+
+    <dl class="stats" aria-label="Kennzahlen" [attr.aria-busy]="loading()">
       <div class="stat">
         <dt class="stat__label">Projekte</dt>
-        <dd class="stat__value">{{ projectCount() }}</dd>
+        <dd class="stat__value">{{ loading() ? '…' : projectCount() }}</dd>
       </div>
       <div class="stat">
         <dt class="stat__label">Gesamtvolumen</dt>
-        <dd class="stat__value">{{ totalBudget() | number: '1.0-0' }}&nbsp;€</dd>
+        <dd class="stat__value">
+          @if (loading()) {
+            …
+          } @else {
+            {{ totalBudget() | number: '1.0-0' }}&nbsp;€
+          }
+        </dd>
       </div>
       <div class="stat">
         <dt class="stat__label">Sparten</dt>
-        <dd class="stat__value">{{ sparteCount() }}</dd>
+        <dd class="stat__value">{{ loading() ? '…' : sparteCount() }}</dd>
       </div>
     </dl>
   </div>

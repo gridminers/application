@@ -1,9 +1,11 @@
-import { computed, Service, signal } from '@angular/core';
+import { computed, inject, Service, signal } from '@angular/core';
 
+import { ApplicationsApi } from '../api/applications-api';
 import { Project } from '../models/project';
 import { Sparte, SPARTEN } from '../models/sparte';
 import { MOCK_PROJECTS } from './mock-projects';
-import { actualPaymentForYear, projectGewerk, projectStreet } from './project-derivations';
+import { projectGewerk, projectStreet } from './project-derivations';
+import { environment } from '../../../environments/environment';
 
 /** Total budget per division. */
 export interface BudgetBySparte {
@@ -232,22 +234,28 @@ export function aggregatePaymentsByYear(
     .sort((a, b) => a.year - b.year);
 }
 
-/** Planned (Zahlungsplan) vs. synthesised actual costs per year. */
+/**
+ * Planned costs vs. realised costs (Ist) grouped by fiscal year. Each project's
+ * planned `gesamtkosten` and — when actuals are reported — its real
+ * `gesamtkosten` are summed by `geschaeftsjahr`. Years with no project carrying
+ * `realKosten` emit `ist: null`.
+ */
 export function aggregatePlanIstByYear(
   projects: readonly Project[],
 ): PlanIstByYear[] {
   const totals = new Map<number, { geplant: number; ist: number; hasIst: boolean }>();
   for (const p of projects) {
-    for (const entry of p.zahlungsplan) {
-      const cur = totals.get(entry.year) ?? { geplant: 0, ist: 0, hasIst: false };
-      cur.geplant += entry.amount;
-      const ist = actualPaymentForYear(p, entry.year, entry.amount);
-      if (ist !== null) {
-        cur.ist += ist;
-        cur.hasIst = true;
-      }
-      totals.set(entry.year, cur);
+    const cur = totals.get(p.geschaeftsjahr) ?? {
+      geplant: 0,
+      ist: 0,
+      hasIst: false,
+    };
+    cur.geplant += p.kosten.gesamtkosten;
+    if (p.realKosten !== null) {
+      cur.ist += p.realKosten.gesamtkosten;
+      cur.hasIst = true;
     }
+    totals.set(p.geschaeftsjahr, cur);
   }
   return [...totals.entries()]
     .map(([year, v]) => ({ year, geplant: v.geplant, ist: v.hasIst ? v.ist : null }))
@@ -387,13 +395,42 @@ export function aggregateStreetSparten(
 /**
  * Provides project data and the aggregates the graph views need.
  *
- * Currently backed by mock data; swap `projects` for an HTTP-driven source
- * later without touching the computed aggregates or consumers.
+ * Backed by the live REST API (`ApplicationsApi`); falls back to
+ * {@link MOCK_PROJECTS} when `environment.useMockData` is set or the request
+ * fails. All computed aggregates are pure consumers of the `projects` signal,
+ * so the source can change without touching them.
  */
 @Service()
 export class ProjectData {
+  private readonly api = inject(ApplicationsApi);
+
   /** All project orders. */
-  readonly projects = signal<readonly Project[]>(MOCK_PROJECTS);
+  readonly projects = signal<readonly Project[]>(
+    environment.useMockData ? MOCK_PROJECTS : [],
+  );
+
+  /** True while the initial API load is in flight. */
+  readonly loading = signal(!environment.useMockData);
+
+  /** Last load error message, or `null`. */
+  readonly error = signal<string | null>(null);
+
+  constructor() {
+    if (!environment.useMockData) {
+      this.api.loadProjects().subscribe({
+        next: (projects) => {
+          this.projects.set(projects);
+          this.loading.set(false);
+        },
+        error: (err: unknown) => {
+          console.error('Failed to load applications; using mock data.', err);
+          this.error.set('Projektdaten konnten nicht geladen werden.');
+          this.projects.set(MOCK_PROJECTS);
+          this.loading.set(false);
+        },
+      });
+    }
+  }
 
   /** Number of projects. */
   readonly projectCount = computed(() => this.projects().length);
