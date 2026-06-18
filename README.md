@@ -8,6 +8,7 @@ Django-REST-API Backend + Angular Frontend für die Verwaltung von Investitionsa
 application/
 ├── backend/        # Django REST API
 ├── ui/             # Angular Frontend
+├── parser/         # PDF-Parser (Azure OpenAI Vision)
 ├── docker-compose.yml
 └── README.md
 ```
@@ -21,6 +22,9 @@ Voraussetzungen: Docker & Docker Compose
 ```bash
 cp .env.example .env
 # .env öffnen und Werte anpassen (SECRET_KEY, Passwörter etc.)
+
+cp parser/.env.example parser/.env
+# parser/.env öffnen und AZURE_OPENAI_API_KEY eintragen
 ```
 
 **2. Services starten:**
@@ -38,9 +42,15 @@ docker compose up --build -d
 | Backend    | http://localhost:8000  | Django REST API                     |
 | UI         | http://localhost:4200  | Angular Frontend (nginx)            |
 | PostgreSQL | Port 5432 (intern)     | Nur innerhalb des Docker-Netzwerks  |
+| Parser     | – (Hintergrund)        | Überwacht `parser/dump` und importiert PDFs |
 
 Die PostgreSQL-Daten werden im Docker-Volume `postgres_data` persistiert.
 Das Backend wartet automatisch, bis die Datenbank bereit ist (Healthcheck), bevor Migrationen ausgeführt werden.
+
+Der **Parser** läuft im Watch-Modus: PDFs, die in `parser/dump` abgelegt werden, werden
+automatisch verarbeitet. Das Ergebnis-JSON landet in `parser/processed_files` und wird per
+POST an `http://backend:8000/api/applications/import/` (intern) an das Backend übergeben.
+Beide Verzeichnisse sind als Bind-Mounts eingebunden und bleiben somit auf dem Host erhalten.
 
 > **Hinweis:** Die `.env`-Datei enthält Secrets und darf nicht ins Repository committed werden. Nur `.env.example` wird versioniert.
 
