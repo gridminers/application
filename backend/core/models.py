@@ -140,10 +140,10 @@ class Application(models.Model):
         verbose_name="Geschäftsjahr",
         help_text="Wird auch als Referenzjahr für die Jahresauswertung verwendet.",
     )
-    execution_start = models.DateField(
+    execution_start = models.TextField(
         verbose_name="Ausführungszeit von",
     )
-    execution_end = models.DateField(
+    execution_end = models.TextField(
         verbose_name="Ausführungszeit bis",
     )
     reason = models.TextField(
