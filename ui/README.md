@@ -1,37 +1,50 @@
-# Ui
+# Gridminers UI
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.0.1.
+Angular 22 Frontend zur Visualisierung der Investitionsanträge aus dem
+[Gridminers-Backend](../backend/README.md). Die App lädt Anträge und
+Kostenkennzahlen über die REST-API und stellt sie als Diagramme (ECharts) und
+auf einer Karte (Leaflet) dar.
+
+Generiert mit [Angular CLI](https://github.com/angular/angular-cli) 22.0.1.
+
+## Seiten
+
+| Route             | Inhalt                                            |
+|-------------------|---------------------------------------------------|
+| `/`               | Landing / Übersicht (Netzdaten Braunschweig)      |
+| `/sparte-assets`  | Auswertung nach Sparte und Assets                 |
+| `/gewerke`        | Auswertung nach Gewerken                          |
+| `/kostenvergleich`| Plan-/Ist-Kostenvergleich                         |
+| `/strassen`       | Straßendetails                                    |
+| `/karte`          | Leaflet-Karte mit hervorgehobenen Straßen         |
+
+Alle Feature-Routen werden lazy geladen (`app.routes.ts`).
+
+## Backend-Anbindung
+
+API-Aufrufe gehen an `/api` und werden im Dev-Server per
+[`proxy.conf.json`](proxy.conf.json) an das Backend (`http://localhost:8000`)
+weitergeleitet. Der Proxy ist in `angular.json` (Target `serve`) verdrahtet, ein
+laufendes Backend ist also Voraussetzung für echte Daten. Im Docker-Build
+übernimmt nginx ([`nginx.conf`](nginx.conf)) dieselbe `/api`-Weiterleitung an den
+`backend`-Service.
 
 ## Development server
 
 To start a local development server, run:
 
 ```bash
-ng serve
+npm start          # entspricht: ng serve (inkl. API-Proxy)
 ```
 
 Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
-
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
-```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
-```bash
-ng generate --help
-```
 
 ## Building
 
 To build the project run:
 
 ```bash
-ng build
+npm run build      # entspricht: ng build
 ```
 
 This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
@@ -67,18 +80,8 @@ sync with `normalizeStreetName` in
 To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
 
 ```bash
-ng test
+npm test           # entspricht: ng test
 ```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
 
 ## Additional Resources
 
