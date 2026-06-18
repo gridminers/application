@@ -61,6 +61,14 @@ class Division(models.Model):
 class Asset(models.Model):
     """Asset – technisches Betriebsmittel oder Infrastrukturobjekt des Projekts."""
 
+    division = models.ForeignKey(
+        Division,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="assets",
+        verbose_name="Sparte",
+    )
     name = models.CharField(
         max_length=200,
         unique=True,
