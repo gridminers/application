@@ -43,12 +43,12 @@ if ! docker compose ps --status running backend | grep -q backend; then
     docker compose up -d backend
 fi
 
-echo "Importiere '${CSV_NAME}' (Standard-Delimiter ';', Encoding 'utf-8-sig')..."
+echo "Importiere '${CSV_NAME}' (Standard-Delimiter ',', Encoding 'utf-8-sig')..."
 echo "Zusätzliche Optionen: ${*:-keine}"
 echo
 
-docker compose exec backend \
+MSYS_NO_PATHCONV=1 docker compose exec backend \
     python manage.py import_real_costs \
     "${CONTAINER_INPUT}/${CSV_NAME}" \
-    --delimiter ";" \
+    --delimiter "," \
     "$@"
